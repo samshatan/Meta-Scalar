@@ -12,8 +12,6 @@ Usage
   python baseline/run_baseline.py --model gpt-4o --task alert_classification
 """
 
-
-
 import argparse
 
 import json
@@ -26,11 +24,7 @@ import time
 
 from typing import Dict, Any, List, Optional
 
-
-
 import requests
-
-
 
 from environment.env import IncidentResponseEnv
 
@@ -38,17 +32,13 @@ from environment.models import Action, ActionType, IncidentCategory, Remediation
 
 from environment.tasks import TASKS, GRADERS
 
-
-
 try:
 
     from openai import OpenAI
 
 except ImportError:
 
-    OpenAI = None                                 
-
-
+    OpenAI = None
 
 HF_TOKEN = os.getenv("HF_TOKEN")
 
@@ -58,21 +48,9 @@ MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 
 BENCHMARK = os.getenv("BENCHMARK") or "incident-response-openenv"
 
-MAX_STEPS = 20                                  
+MAX_STEPS = 20
 
-TEMPERATURE = 0.0                             
-
-
-
-
-
-                                                                               
-
-               
-
-                                                                               
-
-
+TEMPERATURE = 0.0
 
 SYSTEM_PROMPT = """You are an expert Site Reliability Engineer (SRE) acting as an AI agent
 inside an incident response simulation.
@@ -117,18 +95,6 @@ You MUST respond with a single JSON object matching one of these schemas:
 Respond ONLY with valid JSON. No explanation, no markdown.
 """
 
-
-
-
-
-                                                                               
-
-                
-
-                                                                               
-
-
-
 class BaselineAgent:
 
     def __init__(self, model: str = MODEL_NAME):
@@ -145,15 +111,11 @@ class BaselineAgent:
 
         self.model = model
 
-
-
     def pick_action(self, observation_text: str, history: List[Dict]) -> Dict[str, Any]:
 
         """Ask the LLM to pick the next action given the current observation."""
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-
 
         for h in history:
 
@@ -161,11 +123,7 @@ class BaselineAgent:
 
             messages.append({"role": "assistant", "content": json.dumps(h["action"])})
 
-
-
         messages.append({"role": "user", "content": observation_text})
-
-
 
         response = self.client.chat.completions.create(
 
@@ -182,10 +140,6 @@ class BaselineAgent:
         )
 
         return json.loads(response.choices[0].message.content)
-
-
-
-
 
 def obs_to_text(obs_dict: Dict[str, Any]) -> str:
 
@@ -215,8 +169,6 @@ def obs_to_text(obs_dict: Dict[str, Any]) -> str:
 
             lines.append(f"    Metrics: {a['metrics']}")
 
-
-
     lines.append("\n=== SERVICE HEALTH ===")
 
     for s in obs_dict.get("service_health", []):
@@ -229,17 +181,13 @@ def obs_to_text(obs_dict: Dict[str, Any]) -> str:
 
         )
 
-
-
     if obs_dict.get("visible_logs"):
 
         lines.append("\n=== RECENT LOGS ===")
 
-        for l in obs_dict["visible_logs"][-20:]:                     
+        for l in obs_dict["visible_logs"][-20:]:
 
             lines.append(f"  [{l['timestamp']}] {l['service']} {l['level']}: {l['message']}")
-
-
 
     lines.append(f"\n=== AGENT PROGRESS ===")
 
@@ -251,13 +199,7 @@ def obs_to_text(obs_dict: Dict[str, Any]) -> str:
 
     lines.append(f"\nAvailable services to investigate: {obs_dict.get('available_services', [])}")
 
-
-
     return "\n".join(lines)
-
-
-
-
 
 def run_episode(
 
@@ -279,8 +221,6 @@ def run_episode(
 
     obs_dict = obs.model_dump()
 
-
-
     history = []
 
     done = False
@@ -291,15 +231,9 @@ def run_episode(
 
     step_num = 0
 
-
-
     model_used = agent.model if agent else "heuristic"
 
-                                                                
-
     print(f"[START] task={task_id} env={BENCHMARK} model={model_used}", flush=True)
-
-
 
     try:
 
@@ -309,11 +243,7 @@ def run_episode(
 
             obs_text = obs_to_text(obs_dict)
 
-
-
             last_action_error = None
-
-
 
             if agent is not None:
 
@@ -335,11 +265,7 @@ def run_episode(
 
             else:
 
-                                                                 
-
                 action_dict = _heuristic_action(obs_dict, task_id, step_num)
-
-
 
             try:
 
@@ -357,21 +283,13 @@ def run_episode(
 
                 )
 
-
-
             obs, reward, done, info = env.step(action)
 
             obs_dict = obs.model_dump()
 
             cumulative_reward = reward.cumulative
 
-
-
             rewards_list.append(reward.score)
-
-
-
-                                                  
 
             if action.action_type == ActionType.CLASSIFY:
 
@@ -393,39 +311,23 @@ def run_episode(
 
                 act_repr = f"{action.action_type.value}"
 
-
-
             error_str = last_action_error if last_action_error else 'null'
-
-
-
-                                                                                                    
 
             print(f"[STEP] step={step_num} action={act_repr} reward={reward.score:.2f} done={str(done).lower()} error={error_str}", flush=True)
 
-
-
             history.append({"obs": obs_text, "action": action_dict})
-
-
 
             if done:
 
                 break
 
-            time.sleep(0.1)                    
-
-
+            time.sleep(0.1)
 
     except Exception as global_e:
 
         print(f"[ERROR] Episode failed: {global_e}", file=sys.stderr)
 
-        
-
     finally:
-
-                            
 
         grader_result = env.grade()
 
@@ -433,23 +335,13 @@ def run_episode(
 
         grader_result["scenario_index"] = scenario_index
 
-
-
         success = "true" if grader_result["score"] > 0 else "false"
 
         rewards_str = ",".join(f"{r:.2f}" for r in rewards_list)
 
-                                                                                          
-
         print(f"[END] success={success} steps={step_num} score={grader_result['score']:.2f} rewards={rewards_str}", flush=True)
 
-
-
     return grader_result
-
-
-
-
 
 def _heuristic_action(obs_dict: Dict, task_id: str, step: int) -> Dict:
 
@@ -463,23 +355,13 @@ def _heuristic_action(obs_dict: Dict, task_id: str, step: int) -> Dict:
 
     remediation_applied = obs_dict.get("remediation_applied", [])
 
-
-
-                           
-
     for svc in available:
 
         if svc not in investigated:
 
             return {"action_type": "investigate", "service_name": svc}
 
-
-
-                      
-
     if not classified:
-
-                                         
 
         logs = obs_dict.get("visible_logs", [])
 
@@ -510,10 +392,6 @@ def _heuristic_action(obs_dict: Dict, task_id: str, step: int) -> Dict:
             cat = "dependency_failure"
 
         return {"action_type": "classify", "category": cat}
-
-
-
-                                                     
 
     if investigated and not remediation_applied:
 
@@ -549,10 +427,6 @@ def _heuristic_action(obs_dict: Dict, task_id: str, step: int) -> Dict:
 
         return {"action_type": "remediate", "service_name": svc, "remediation_action": rem}
 
-
-
-                    
-
     return {
 
         "action_type": "resolve",
@@ -566,18 +440,6 @@ def _heuristic_action(obs_dict: Dict, task_id: str, step: int) -> Dict:
         )
 
     }
-
-
-
-
-
-                                                                               
-
-      
-
-                                                                               
-
-
 
 def main():
 
@@ -593,13 +455,7 @@ def main():
 
     args = parser.parse_args()
 
-
-
     verbose = args.output == "human"
-
-
-
-                 
 
     if args.heuristic or not API_KEY:
 
@@ -609,13 +465,9 @@ def main():
 
         agent = BaselineAgent(model=args.model)
 
-
-
     env = IncidentResponseEnv()
 
     task_ids = [args.task] if args.task else list(TASKS.keys())
-
-
 
     all_results = {}
 
@@ -633,8 +485,6 @@ def main():
 
             time.sleep(0.5)
 
-
-
         avg_score = sum(r["score"] for r in scenario_results) / len(scenario_results)
 
         all_results[task_id] = {
@@ -648,10 +498,6 @@ def main():
             "breakdowns":      [r["breakdown"] for r in scenario_results],
 
         }
-
-
-
-
 
 if __name__ == "__main__":
 

@@ -3,15 +3,11 @@ Smoke tests for the Incident Response OpenEnv environment.
 Run: python -m pytest tests/test_env.py -v
 """
 
-
-
 import sys
 
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-
 
 import pytest
 
@@ -21,35 +17,11 @@ from environment.models import Action, ActionType, IncidentCategory, Remediation
 
 from environment.tasks import TASKS, GRADERS
 
-
-
-
-
-                                                                               
-
-          
-
-                                                                               
-
-
-
 @pytest.fixture
 
 def env():
 
     return IncidentResponseEnv()
-
-
-
-
-
-                                                                               
-
-                               
-
-                                                                               
-
-
 
 class TestTask1:
 
@@ -67,8 +39,6 @@ class TestTask1:
 
         assert obs.visible_logs == []
 
-
-
     def test_investigate_reveals_logs(self, env):
 
         env.reset("alert_classification", 0)
@@ -84,8 +54,6 @@ class TestTask1:
         assert reward.score > 0
 
         assert not done
-
-
 
     def test_correct_classification_gives_reward(self, env):
 
@@ -107,8 +75,6 @@ class TestTask1:
 
         assert reward.score == pytest.approx(0.30, abs=0.01)
 
-
-
     def test_wrong_classification_gives_zero(self, env):
 
         env.reset("alert_classification", 0)
@@ -125,13 +91,9 @@ class TestTask1:
 
         assert reward.score == 0.0
 
-
-
     def test_grader_correct_episode(self, env):
 
         env.reset("alert_classification", 0)
-
-                                                        
 
         env.step(Action(action_type=ActionType.INVESTIGATE, service_name="postgres-primary"))
 
@@ -143,9 +105,7 @@ class TestTask1:
 
         assert result["breakdown"]["classification_correct"] == 1.0
 
-        assert result["score"] > 0.5                       
-
-
+        assert result["score"] > 0.5
 
     def test_grader_wrong_classification(self, env):
 
@@ -159,8 +119,6 @@ class TestTask1:
 
         assert result["score"] == 0.0
 
-
-
     def test_grader_score_in_range(self, env):
 
         """Grader must always return score in [0.0, 1.0]."""
@@ -173,18 +131,6 @@ class TestTask1:
 
             assert 0.0 <= result["score"] <= 1.0
 
-
-
-
-
-                                                                               
-
-                              
-
-                                                                               
-
-
-
 class TestTask2:
 
     def test_reset(self, env):
@@ -195,23 +141,15 @@ class TestTask2:
 
         assert obs.max_steps == 12
 
-
-
     def test_full_episode_partial_credit(self, env):
 
         env.reset("root_cause_analysis", 0)
-
-                                
 
         env.step(Action(action_type=ActionType.INVESTIGATE, service_name="checkout-service"))
 
         env.step(Action(action_type=ActionType.INVESTIGATE, service_name="auth-service"))
 
-                  
-
         env.step(Action(action_type=ActionType.CLASSIFY, category=IncidentCategory.CONFIGURATION_ERROR))
-
-                 
 
         obs, reward, done, _ = env.step(Action(
 
@@ -225,8 +163,6 @@ class TestTask2:
 
         result = env.grade()
 
-                                                                                    
-
         assert result["score"] >= 0.60
 
         assert result["breakdown"]["classification"] == 1.0
@@ -234,8 +170,6 @@ class TestTask2:
         assert result["breakdown"]["investigation"] == 1.0
 
         assert result["breakdown"]["root_identified"] == 1.0
-
-
 
     def test_penalty_for_reinvestigation(self, env):
 
@@ -245,9 +179,7 @@ class TestTask2:
 
         _, reward, _, _ = env.step(Action(action_type=ActionType.INVESTIGATE, service_name="checkout-service"))
 
-        assert reward.score < 0           
-
-
+        assert reward.score < 0
 
     def test_grader_score_in_range(self, env):
 
@@ -259,18 +191,6 @@ class TestTask2:
 
             assert 0.0 <= result["score"] <= 1.0
 
-
-
-
-
-                                                                               
-
-                                 
-
-                                                                               
-
-
-
 class TestTask3:
 
     def test_reset(self, env):
@@ -281,23 +201,15 @@ class TestTask3:
 
         assert obs.max_steps == 20
 
-
-
     def test_full_optimal_episode(self, env):
 
         env.reset("full_incident_response", 0)
-
-                                         
 
         for svc in ["redis-cluster", "ml-feature-store", "api-gateway"]:
 
             env.step(Action(action_type=ActionType.INVESTIGATE, service_name=svc))
 
-                  
-
         env.step(Action(action_type=ActionType.CLASSIFY, category=IncidentCategory.RESOURCE_EXHAUSTION))
-
-                                    
 
         env.step(Action(
 
@@ -319,8 +231,6 @@ class TestTask3:
 
         ))
 
-                                   
-
         env.step(Action(
 
             action_type=ActionType.RESOLVE,
@@ -339,15 +249,13 @@ class TestTask3:
 
         result = env.grade()
 
-        assert result["score"] >= 0.75                                  
+        assert result["score"] >= 0.75
 
         assert result["breakdown"]["classification"] == 1.0
 
         assert result["breakdown"]["root_coverage"] == 1.0
 
         assert result["breakdown"]["remediation"] >= 0.8
-
-
 
     def test_wrong_remediation_penalised(self, env):
 
@@ -361,13 +269,11 @@ class TestTask3:
 
             service_name="redis-cluster",
 
-            remediation_action=RemediationAction.SCALE_UP,         
+            remediation_action=RemediationAction.SCALE_UP,
 
         ))
 
-        assert reward.score < 0                                 
-
-
+        assert reward.score < 0
 
     def test_step_budget_enforced(self, env):
 
@@ -391,9 +297,7 @@ class TestTask3:
 
         assert done
 
-        assert steps <= 21                    
-
-
+        assert steps <= 21
 
     def test_grader_all_scores_in_range(self, env):
 
@@ -409,18 +313,6 @@ class TestTask3:
 
                 assert 0.0 <= v <= 1.0, f"breakdown[{k}]={v} out of range"
 
-
-
-
-
-                                                                               
-
-                                 
-
-                                                                               
-
-
-
 class TestSpecCompliance:
 
     def test_state_returns_after_reset(self, env):
@@ -435,15 +327,11 @@ class TestSpecCompliance:
 
         assert s.episode_done is False
 
-
-
     def test_reset_before_step_raises(self, env):
 
         with pytest.raises(RuntimeError):
 
             env.step(Action(action_type=ActionType.CLASSIFY, category=IncidentCategory.MEMORY_LEAK))
-
-
 
     def test_step_after_done_raises(self, env):
 
@@ -455,15 +343,11 @@ class TestSpecCompliance:
 
             env.step(Action(action_type=ActionType.INVESTIGATE, service_name="postgres-primary"))
 
-
-
     def test_reset_clears_state(self, env):
 
         env.reset("alert_classification", 0)
 
         env.step(Action(action_type=ActionType.CLASSIFY, category=IncidentCategory.DATABASE_CONNECTION))
-
-                                  
 
         obs = env.reset("alert_classification", 0)
 
@@ -473,15 +357,11 @@ class TestSpecCompliance:
 
         assert obs.visible_logs == []
 
-
-
     def test_invalid_task_raises(self, env):
 
         with pytest.raises(ValueError):
 
             env.reset("nonexistent_task")
-
-
 
     def test_all_tasks_present(self):
 
@@ -491,15 +371,11 @@ class TestSpecCompliance:
 
         assert "full_incident_response" in TASKS
 
-
-
     def test_all_graders_callable(self):
 
         for task_id in TASKS:
 
             assert callable(GRADERS[task_id])
-
-
 
     def test_invalid_scenario_index_raises_valueerror(self, env):
 
@@ -510,8 +386,6 @@ class TestSpecCompliance:
         with pytest.raises(ValueError, match="Invalid scenario_index"):
 
             env.reset("alert_classification", 99)
-
-
 
     def test_cumulative_reward_non_decreasing_good_actions(self, env):
 
@@ -533,7 +407,7 @@ class TestSpecCompliance:
 
             _, reward, done, _ = env.step(action)
 
-            assert reward.cumulative >= prev - 0.001                      
+            assert reward.cumulative >= prev - 0.001
 
             prev = reward.cumulative
 

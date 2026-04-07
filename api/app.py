@@ -12,8 +12,6 @@ POST /baseline           — Run the baseline inference script and return scores
 GET  /health             — Health-check
 """
 
-
-
 import os
 
 import sys
@@ -24,8 +22,6 @@ import json
 
 from typing import Optional
 
-
-
 from fastapi import FastAPI, HTTPException
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,15 +30,11 @@ from fastapi.responses import RedirectResponse
 
 from pydantic import BaseModel
 
-
-
 from environment.env import IncidentResponseEnv
 
 from environment.models import Action, Observation, Reward, StepResponse
 
 from environment.tasks import TASKS
-
-
 
 app = FastAPI(
 
@@ -62,8 +54,6 @@ app = FastAPI(
 
 )
 
-
-
 app.add_middleware(
 
     CORSMiddleware,
@@ -76,29 +66,13 @@ app.add_middleware(
 
 )
 
-
-
-                                                                                   
-
 _env = IncidentResponseEnv()
-
-
-
-
-
-                                                                                
-
-
 
 class ResetRequest(BaseModel):
 
     task_id: str = "alert_classification"
 
     scenario_index: int = 0
-
-
-
-
 
 class GraderResponse(BaseModel):
 
@@ -110,14 +84,6 @@ class GraderResponse(BaseModel):
 
     feedback: str
 
-
-
-
-
-                                                                                
-
-
-
 @app.get("/", include_in_schema=False)
 
 def root():
@@ -126,19 +92,11 @@ def root():
 
     return RedirectResponse(url="/docs")
 
-
-
-
-
 @app.get("/health")
 
 def health():
 
     return {"status": "ok", "environment": "incident-response-openenv", "version": "1.0.0"}
-
-
-
-
 
 @app.post("/reset", response_model=Observation)
 
@@ -156,10 +114,6 @@ def reset(req: ResetRequest):
 
         raise HTTPException(status_code=400, detail=str(e))
 
-
-
-
-
 @app.post("/step", response_model=StepResponse)
 
 def step(action: Action):
@@ -176,10 +130,6 @@ def step(action: Action):
 
         raise HTTPException(status_code=400, detail=str(e))
 
-
-
-
-
 @app.get("/state")
 
 def state():
@@ -190,13 +140,9 @@ def state():
 
         s = _env.state()
 
-                                                               
-
         raw = s.model_dump()
 
         gt = s.ground_truth
-
-                                       
 
         for k, v in gt.items():
 
@@ -217,10 +163,6 @@ def state():
     except RuntimeError as e:
 
         raise HTTPException(status_code=400, detail=str(e))
-
-
-
-
 
 @app.get("/tasks")
 
@@ -274,10 +216,6 @@ def tasks():
 
     return result
 
-
-
-
-
 @app.post("/grader", response_model=GraderResponse)
 
 def grader():
@@ -306,10 +244,6 @@ def grader():
 
         raise HTTPException(status_code=400, detail=str(e))
 
-
-
-
-
 @app.post("/baseline")
 
 def baseline():
@@ -323,13 +257,9 @@ def baseline():
 
     script = os.path.abspath(script)
 
-
-
     if not os.path.exists(script):
 
         raise HTTPException(status_code=500, detail="Baseline script not found.")
-
-
 
     env_vars = os.environ.copy()
 
@@ -347,8 +277,6 @@ def baseline():
 
     )
 
-
-
     if result.returncode != 0:
 
         raise HTTPException(
@@ -359,8 +287,6 @@ def baseline():
 
         )
 
-
-
     try:
 
         scores = json.loads(result.stdout)
@@ -368,7 +294,5 @@ def baseline():
     except json.JSONDecodeError:
 
         scores = {"raw_output": result.stdout[:4000]}
-
-
 
     return {"status": "ok", "baseline_scores": scores}

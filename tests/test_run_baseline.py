@@ -2,8 +2,6 @@ import pytest
 
 from baseline.run_baseline import obs_to_text
 
-
-
 def test_obs_to_text_full():
 
     obs_dict = {
@@ -86,10 +84,6 @@ def test_obs_to_text_full():
 
     assert "Available services to investigate: ['db', 'web', 'api']" in text
 
-
-
-
-
 def test_obs_to_text_minimal():
 
     obs_dict = {
@@ -120,7 +114,7 @@ def test_obs_to_text_minimal():
 
     assert "=== SERVICE HEALTH ===" in text
 
-    assert "=== RECENT LOGS ===" not in text                                        
+    assert "=== RECENT LOGS ===" not in text
 
     assert "=== AGENT PROGRESS ===" in text
 
@@ -131,10 +125,6 @@ def test_obs_to_text_minimal():
     assert "Remediations: []" in text
 
     assert "Available services to investigate: []" in text
-
-
-
-
 
 def test_obs_to_text_truncates_logs():
 
@@ -165,7 +155,5 @@ def test_obs_to_text_truncates_logs():
     assert "[T10] svc INFO: Log 10" in text
 
     assert "[T29] svc INFO: Log 29" in text
-
-                                              
 
     assert text.count(" svc INFO: Log ") == 20

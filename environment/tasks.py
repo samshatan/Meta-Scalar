@@ -7,13 +7,9 @@ Task 2 – root_cause_analysis   (medium)
 Task 3 – full_incident_response (hard)
 """
 
-
-
 import copy
 
 from typing import Dict, Any, List
-
-
 
 from .models import (
 
@@ -25,39 +21,9 @@ from .models import (
 
 )
 
-
-
-                                                                               
-
-               
-
-                                                                               
-
-
-
 def _health(name, status, err, p99, pods):
 
     return ServiceHealth(name=name, status=status, error_rate=err, p99_latency_ms=p99, pod_count=pods)
-
-
-
-
-
-                                                                               
-
-                                       
-
-                                                                               
-
-                                                                      
-
-                                                                    
-
-                                                                       
-
-                                                     
-
-
 
 TASK_1_SCENARIOS = [
 
@@ -255,24 +221,6 @@ TASK_1_SCENARIOS = [
 
 ]
 
-
-
-
-
-                                                                               
-
-                                        
-
-                                                                               
-
-                                                                         
-
-                                                                               
-
-                                                                               
-
-
-
 TASK_2_SCENARIOS = [
 
     {
@@ -407,15 +355,13 @@ TASK_2_SCENARIOS = [
 
             "correct_remediation": RemediationAction.UPDATE_CONFIG,
 
-            "min_investigations": 2,                                    
+            "min_investigations": 2,
 
         },
 
         "max_steps": 12,
 
     },
-
-                                                                                  
 
     {
 
@@ -558,24 +504,6 @@ TASK_2_SCENARIOS = [
     },
 
 ]
-
-
-
-
-
-                                                                               
-
-                                         
-
-                                                                               
-
-                                                                          
-
-                                                           
-
-                                                              
-
-
 
 TASK_3_SCENARIOS = [
 
@@ -753,8 +681,6 @@ TASK_3_SCENARIOS = [
 
         "ground_truth": {
 
-                                                                                       
-
             "category": IncidentCategory.RESOURCE_EXHAUSTION,
 
             "root_services": ["redis-cluster", "ml-feature-store"],
@@ -784,8 +710,6 @@ TASK_3_SCENARIOS = [
         "max_steps": 20,
 
     },
-
-                                                                                  
 
     {
 
@@ -971,18 +895,6 @@ TASK_3_SCENARIOS = [
 
 ]
 
-
-
-
-
-                                                                               
-
-               
-
-                                                                               
-
-
-
 TASKS = {
 
     "alert_classification": {
@@ -1087,18 +999,6 @@ TASKS = {
 
 }
 
-
-
-
-
-                                                                               
-
-         
-
-                                                                               
-
-
-
 def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
 
     """
@@ -1116,17 +1016,11 @@ def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
 
     history = state["step_history"]
 
-
-
     classification_correct = 0.0
 
     if obs.get("classified") and obs.get("classification") == gt["category"].value:
 
         classification_correct = 1.0
-
-
-
-                                          
 
     steps_used = obs.get("step", 0)
 
@@ -1139,8 +1033,6 @@ def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
     else:
 
         efficiency = max(0.5, 1.0 - 0.05 * (steps_used - 3))
-
-
 
     score = classification_correct * efficiency
 
@@ -1170,10 +1062,6 @@ def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
 
     }
 
-
-
-
-
 def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
 
     """
@@ -1190,17 +1078,9 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
 
     obs = state["observation"]
 
-
-
-                    
-
     cls_score = 1.0 if (obs.get("classified") and
 
                         obs.get("classification") == gt["category"].value) else 0.0
-
-
-
-                           
 
     done = obs.get("investigations_done", [])
 
@@ -1208,19 +1088,9 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
 
     inv_score = min(1.0, len(done) / min_inv) if min_inv > 0 else 1.0
 
-
-
-                                                          
-
     root_investigated = 1.0 if gt["root_service"] in done else 0.0
 
-
-
-              
-
     resolved_score = 1.0 if obs.get("resolved") else 0.0
-
-
 
     score = (0.30 * cls_score +
 
@@ -1229,8 +1099,6 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
              0.25 * root_investigated +
 
              0.15 * resolved_score)
-
-
 
     return {
 
@@ -1262,10 +1130,6 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
 
     }
 
-
-
-
-
 def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
     """
@@ -1283,17 +1147,9 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
     obs = state["observation"]
 
-
-
-                    
-
     cls_score = 1.0 if (obs.get("classified") and
 
                         obs.get("classification") == gt["category"].value) else 0.0
-
-
-
-                           
 
     done = set(obs.get("investigations_done", []))
 
@@ -1301,19 +1157,11 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
     inv_score = min(1.0, len(done) / min_inv)
 
-
-
-                           
-
     root_services = set(gt.get("root_services", []))
 
     covered = root_services & done
 
     root_score = len(covered) / len(root_services) if root_services else 1.0
-
-
-
-                         
 
     applied = set(obs.get("remediation_applied", []))
 
@@ -1325,15 +1173,9 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
     rem_score = len(applied & correct) / len(correct) if correct else 1.0
 
-                                 
-
     wrong = applied - correct
 
     rem_score = max(0.0, rem_score - 0.1 * len(wrong))
-
-
-
-                        
 
     res_score = 0.0
 
@@ -1355,8 +1197,6 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
             res_score = 1.0
 
-
-
     score = (0.20 * cls_score +
 
              0.20 * inv_score +
@@ -1366,8 +1206,6 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
              0.20 * rem_score +
 
              0.15 * res_score)
-
-
 
     return {
 
@@ -1402,10 +1240,6 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
         ),
 
     }
-
-
-
-
 
 GRADERS = {
 

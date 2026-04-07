@@ -4,17 +4,11 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-
-
 from environment.tasks import _health
 
 from environment.models import ServiceHealth
 
-
-
 def test_health_utility():
-
-                     
 
     health = _health("payment-service", "degraded", 0.03, 5420.0, 3)
 
@@ -29,10 +23,6 @@ def test_health_utility():
     assert health.p99_latency_ms == 5420.0
 
     assert health.pod_count == 3
-
-
-
-                       
 
     health2 = _health("redis-cache", "healthy", 0.00, 1.2, 2)
 

@@ -9,15 +9,11 @@ state()                        → EnvironmentState
 grade()                        → grader result dict
 """
 
-
-
 import copy
 
 import uuid
 
 from typing import Optional, Tuple, Dict, Any
-
-
 
 from .models import (
 
@@ -29,17 +25,7 @@ from .models import (
 
 from .tasks import TASKS, GRADERS
 
-
-
-
-
-                                                                               
-
 STEP_OVER_PENALTY = 0.02
-
-
-
-
 
 class IncidentResponseEnv:
 
@@ -54,17 +40,9 @@ class IncidentResponseEnv:
     3. grade()         — compute final grader score for the episode
     """
 
-
-
     def __init__(self):
 
         self._state: Optional[EnvironmentState] = None
-
-
-
-                                                                                
-
-
 
     def reset(
 
@@ -80,8 +58,6 @@ class IncidentResponseEnv:
 
             raise ValueError(f"Unknown task_id '{task_id}'. Available: {list(TASKS)}")
 
-
-
         task = TASKS[task_id]
 
         scenarios = task["scenarios"]
@@ -90,11 +66,7 @@ class IncidentResponseEnv:
 
             raise ValueError(f"Invalid scenario_index {scenario_index} for task '{task_id}'. Must be between 0 and {len(scenarios) - 1}.")
 
-
-
         scenario = scenarios[scenario_index]
-
-
 
         obs = Observation(
 
@@ -138,8 +110,6 @@ class IncidentResponseEnv:
 
         )
 
-
-
         self._state = EnvironmentState(
 
             observation=obs,
@@ -154,10 +124,6 @@ class IncidentResponseEnv:
 
         )
 
-
-
-                                                                                                        
-
         gt = scenario["ground_truth"]
 
         gt_rems = gt.get("correct_remediations", [])
@@ -170,25 +136,13 @@ class IncidentResponseEnv:
 
         correct_remediation_values = frozenset(r.value for r in gt_rems)
 
-
-
-                                                                  
-
         self._state.__dict__["_scenario"] = scenario
 
         self._state.__dict__["_task_id"] = task_id
 
         self._state.__dict__["_correct_remediation_values"] = correct_remediation_values
 
-
-
         return obs
-
-
-
-                                                                                
-
-
 
     def step(self, action: Action) -> Tuple[Observation, Reward, bool, Dict[str, Any]]:
 
@@ -200,8 +154,6 @@ class IncidentResponseEnv:
 
             raise RuntimeError("Episode is done. Call reset() to start a new one.")
 
-
-
         obs = self._state.observation
 
         gt = self._state.ground_truth
@@ -210,23 +162,11 @@ class IncidentResponseEnv:
 
         log_map = scenario.get("log_map", {})
 
-
-
-                                
-
         obs.step += 1
-
-
 
         step_score = 0.0
 
         feedback_parts = []
-
-
-
-                                                                                
-
-
 
         if action.action_type == ActionType.CLASSIFY:
 
@@ -236,8 +176,6 @@ class IncidentResponseEnv:
 
             feedback_parts.append(result["msg"])
 
-
-
         elif action.action_type == ActionType.INVESTIGATE:
 
             result = self._handle_investigate(action, log_map, obs)
@@ -245,8 +183,6 @@ class IncidentResponseEnv:
             step_score = result["score"]
 
             feedback_parts.append(result["msg"])
-
-
 
         elif action.action_type == ActionType.REMEDIATE:
 
@@ -256,19 +192,15 @@ class IncidentResponseEnv:
 
             feedback_parts.append(result["msg"])
 
-
-
         elif action.action_type == ActionType.ESCALATE:
 
-            step_score = 0.05                                            
+            step_score = 0.05
 
             feedback_parts.append("Escalated to human team. Episode ends.")
 
             obs.resolved = True
 
             self._state.episode_done = True
-
-
 
         elif action.action_type == ActionType.RESOLVE:
 
@@ -282,15 +214,9 @@ class IncidentResponseEnv:
 
             self._state.episode_done = True
 
-
-
         else:
 
             feedback_parts.append(f"Unknown action type: {action.action_type}")
-
-
-
-                                                                                
 
         over_budget = max(0, obs.step - obs.max_steps)
 
@@ -301,10 +227,6 @@ class IncidentResponseEnv:
             step_score = max(0.0, step_score - penalty)
 
             feedback_parts.append(f"[Over budget by {over_budget} step(s), penalty -{penalty:.2f}]")
-
-
-
-                                 
 
         if obs.step >= obs.max_steps and not self._state.episode_done:
 
@@ -322,10 +244,6 @@ class IncidentResponseEnv:
 
             obs.message = " | ".join(feedback_parts)
 
-
-
-                                                                                
-
         self._state.cumulative_score = max(
 
             -1.0,
@@ -333,10 +251,6 @@ class IncidentResponseEnv:
             min(1.0, self._state.cumulative_score + step_score)
 
         )
-
-
-
-                               
 
         self._state.step_history.append({
 
@@ -350,8 +264,6 @@ class IncidentResponseEnv:
 
         })
 
-
-
         reward = Reward(
 
             score=round(step_score, 4),
@@ -364,8 +276,6 @@ class IncidentResponseEnv:
 
         )
 
-
-
         info = {
 
             "step": obs.step,
@@ -376,15 +286,7 @@ class IncidentResponseEnv:
 
         }
 
-
-
         return obs, reward, self._state.episode_done, info
-
-
-
-                                                                                
-
-
 
     def state(self) -> EnvironmentState:
 
@@ -393,12 +295,6 @@ class IncidentResponseEnv:
             raise RuntimeError("Call reset() before state()")
 
         return self._state
-
-
-
-                                                                                
-
-
 
     def grade(self) -> Dict[str, Any]:
 
@@ -426,12 +322,6 @@ class IncidentResponseEnv:
 
         return grader(grade_state)
 
-
-
-                                                                                
-
-
-
     def _handle_classify(self, action, gt, obs):
 
         if not action.category:
@@ -456,8 +346,6 @@ class IncidentResponseEnv:
 
         return {"score": score, "msg": msg}
 
-
-
     def _handle_investigate(self, action, log_map, obs):
 
         if not action.service_name:
@@ -478,11 +366,7 @@ class IncidentResponseEnv:
 
         if svc in obs.investigations_done:
 
-                                                        
-
             return {"score": -0.05, "msg": f"Already investigated '{svc}' — no new information."}
-
-
 
         obs.investigations_done.append(svc)
 
@@ -490,11 +374,7 @@ class IncidentResponseEnv:
 
         obs.visible_logs = obs.visible_logs + new_logs
 
-
-
-        score = 0.10                                     
-
-                                                           
+        score = 0.10
 
         has_errors = any(l.level == "ERROR" for l in new_logs)
 
@@ -502,13 +382,9 @@ class IncidentResponseEnv:
 
             score = 0.15
 
-
-
         msg = f"Investigated '{svc}' — {len(new_logs)} log entries retrieved."
 
         return {"score": score, "msg": msg}
-
-
 
     def _handle_remediate(self, action, gt, obs):
 
@@ -522,8 +398,6 @@ class IncidentResponseEnv:
 
             }
 
-                                      
-
         if action.service_name not in obs.investigations_done:
 
             return {
@@ -534,29 +408,19 @@ class IncidentResponseEnv:
 
             }
 
-
-
         rem_val = action.remediation_action.value
 
         if rem_val in obs.remediation_applied:
 
             return {"score": -0.05, "msg": f"Remediation '{rem_val}' already applied."}
 
-
-
         obs.remediation_applied.append(rem_val)
-
-
-
-                                                                                      
 
         correct_values = self._state.__dict__["_correct_remediation_values"]
 
         correct = rem_val in correct_values
 
         score = 0.20 if correct else -0.10
-
-
 
         msg = (
 
@@ -567,8 +431,6 @@ class IncidentResponseEnv:
         )
 
         return {"score": score, "msg": msg}
-
-
 
     def _handle_resolve(self, action, gt, obs):
 
@@ -584,11 +446,9 @@ class IncidentResponseEnv:
 
         summary = action.resolution_summary
 
-        obs.resolution_summary = summary                                                      
+        obs.resolution_summary = summary
 
-
-
-        score = 0.10                      
+        score = 0.10
 
         keywords = gt.get("resolution_keywords", [])
 
@@ -599,8 +459,6 @@ class IncidentResponseEnv:
             hits = sum(1 for k in keywords if k in lower_sum)
 
             score += 0.15 * (hits / len(keywords))
-
-
 
         msg = (
 

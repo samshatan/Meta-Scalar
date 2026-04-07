@@ -3,21 +3,11 @@ Typed Pydantic models for the Incident Response OpenEnv environment.
 All action, observation, and reward types are defined here.
 """
 
-
-
 from pydantic import BaseModel, Field
 
 from typing import Optional, List, Dict, Any
 
 from enum import Enum
-
-
-
-
-
-                                                                                
-
-
 
 class IncidentCategory(str, Enum):
 
@@ -33,25 +23,17 @@ class IncidentCategory(str, Enum):
 
     CONFIGURATION_ERROR  = "configuration_error"
 
-
-
-
-
 class ActionType(str, Enum):
 
-    CLASSIFY    = "classify"                                  
+    CLASSIFY    = "classify"
 
-    INVESTIGATE = "investigate"                                     
+    INVESTIGATE = "investigate"
 
-    REMEDIATE   = "remediate"                                
+    REMEDIATE   = "remediate"
 
-    ESCALATE    = "escalate"                               
+    ESCALATE    = "escalate"
 
-    RESOLVE     = "resolve"                                  
-
-
-
-
+    RESOLVE     = "resolve"
 
 class RemediationAction(str, Enum):
 
@@ -75,14 +57,6 @@ class RemediationAction(str, Enum):
 
     ROTATE_CREDENTIALS      = "rotate_credentials"
 
-
-
-
-
-                                                                                
-
-
-
 class Action(BaseModel):
 
     """
@@ -101,19 +75,11 @@ class Action(BaseModel):
 
     action_type: ActionType = Field(..., description="Type of action to perform")
 
-
-
-              
-
     category: Optional[IncidentCategory] = Field(
 
         None, description="Incident category (required for classify action)"
 
     )
-
-
-
-                             
 
     service_name: Optional[str] = Field(
 
@@ -121,19 +87,11 @@ class Action(BaseModel):
 
     )
 
-
-
-               
-
     remediation_action: Optional[RemediationAction] = Field(
 
         None, description="Specific remediation to apply (required for remediate)"
 
     )
-
-
-
-              
 
     escalation_reason: Optional[str] = Field(
 
@@ -141,23 +99,11 @@ class Action(BaseModel):
 
     )
 
-
-
-             
-
     resolution_summary: Optional[str] = Field(
 
         None, description="Human-readable resolution summary (required for resolve)"
 
     )
-
-
-
-
-
-                                                                                
-
-
 
 class Alert(BaseModel):
 
@@ -165,17 +111,13 @@ class Alert(BaseModel):
 
     service: str
 
-    severity: str                        
+    severity: str
 
     message: str
 
-    fired_at: str                              
+    fired_at: str
 
     metrics: Dict[str, float] = Field(default_factory=dict)
-
-
-
-
 
 class LogEntry(BaseModel):
 
@@ -183,33 +125,21 @@ class LogEntry(BaseModel):
 
     service: str
 
-    level: str                                  
+    level: str
 
     message: str
-
-
-
-
 
 class ServiceHealth(BaseModel):
 
     name: str
 
-    status: str                                       
+    status: str
 
-    error_rate: float                 
+    error_rate: float
 
     p99_latency_ms: float
 
     pod_count: int
-
-
-
-
-
-                                                                                
-
-
 
 class Observation(BaseModel):
 
@@ -236,25 +166,13 @@ class Observation(BaseModel):
 
     task_description: str
 
-
-
-                              
-
     alerts: List[Alert]
 
     available_services: List[str]
 
     service_health: List[ServiceHealth]
 
-
-
-                                          
-
     visible_logs: List[LogEntry] = Field(default_factory=list)
-
-
-
-                             
 
     classified: bool = False
 
@@ -266,29 +184,13 @@ class Observation(BaseModel):
 
     resolved: bool = False
 
-
-
-                                                           
-
     resolution_summary: Optional[str] = None
-
-
-
-                      
 
     step: int = 0
 
     max_steps: int = 10
 
     message: str = ""
-
-
-
-
-
-                                                                                
-
-
 
 class Reward(BaseModel):
 
@@ -313,35 +215,19 @@ class Reward(BaseModel):
 
     feedback: str = ""
 
-
-
-
-
-                                                                               
-
-
-
 class EnvironmentState(BaseModel):
 
     """Complete internal state, including ground truth (for graders)."""
 
     observation: Observation
 
-    ground_truth: Dict[str, Any]                                            
+    ground_truth: Dict[str, Any]
 
     episode_done: bool = False
 
     cumulative_score: float = 0.0
 
     step_history: List[Dict[str, Any]] = Field(default_factory=list)
-
-
-
-
-
-                                                                                
-
-
 
 class StepResponse(BaseModel):
 

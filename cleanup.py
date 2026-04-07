@@ -1,11 +1,11 @@
 import tokenize
 import io
 import os
+import re
 
-def remove_comments_from_source(source):
+def remove_comments_and_clean_whitespace(source):
     """
-    Safely removes only # comments using tokenize.
-    Preserves all strings (docstrings, dict keys, etc.) to keep logic intact.
+    Safely removes # comments and collapses multiple blank lines.
     """
     try:
         io_obj = io.StringIO(source)
@@ -34,7 +34,21 @@ def remove_comments_from_source(source):
             last_lineno = end_line
             last_col = end_col
         
-        return out.strip() + "\n"
+        # Post-process: Remove lines with only whitespace and collapse multiple blank lines
+        lines = out.splitlines()
+        cleaned_lines = []
+        for line in lines:
+            line_content = line.rstrip()
+            if line_content or (not cleaned_lines or cleaned_lines[-1] != ""):
+                cleaned_lines.append(line_content)
+        
+        # Trim multiple blank lines at the start and end
+        result = "\n".join(cleaned_lines).strip()
+        
+        # Ensure only one blank line maximum anywhere
+        result = re.sub(r'\n\s*\n\s*\n', '\n\n', result)
+        
+        return result + "\n"
     except Exception as e:
         print(f"Tokenization error: {e}")
         return source
@@ -51,7 +65,7 @@ def process_directory(directory="."):
                 print(f"Processing {file_path}...")
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                cleaned = remove_comments_from_source(content)
+                cleaned = remove_comments_and_clean_whitespace(content)
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(cleaned)
 
