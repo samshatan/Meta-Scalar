@@ -176,73 +176,77 @@ def run_episode(
     # [START] task=<task_name> env=<env_name> model=<model_name>
     print(f"[START] task={task_id} env={BENCHMARK} model={model_used}", flush=True)
 
-    step_num = 0
-    while not done:
-        step_num += 1
-        obs_text = obs_to_text(obs_dict)
+    try:
+        while not done:
+            step_num += 1
+            obs_text = obs_to_text(obs_dict)
 
-        last_action_error = None
+            last_action_error = None
 
-        if agent is not None:
+            if agent is not None:
+                try:
+                    action_dict = agent.pick_action(obs_text, history)
+                except Exception as e:
+                    last_action_error = str(e)
+                    action_dict = {
+                        "action_type": "resolve",
+                        "resolution_summary": f"Unable to complete investigation due to API error: {e}"
+                    }
+            else:
+                # Heuristic baseline (no LLM) — for smoke testing
+                action_dict = _heuristic_action(obs_dict, task_id, step_num)
+
             try:
-                action_dict = agent.pick_action(obs_text, history)
+                action = Action(**action_dict)
             except Exception as e:
                 last_action_error = str(e)
-                action_dict = {
-                    "action_type": "resolve",
-                    "resolution_summary": "Unable to complete investigation due to API error."
-                }
-        else:
-            # Heuristic baseline (no LLM) — for smoke testing
-            action_dict = _heuristic_action(obs_dict, task_id, step_num)
+                action = Action(
+                    action_type=ActionType.RESOLVE,
+                    resolution_summary=f"Agent produced invalid action: {e} — forced resolution."
+                )
 
-        try:
-            action = Action(**action_dict)
-        except Exception as e:
-            last_action_error = str(e)
-            action = Action(
-                action_type=ActionType.RESOLVE,
-                resolution_summary="Agent produced invalid action — forced resolution."
-            )
+            obs, reward, done, info = env.step(action)
+            obs_dict = obs.model_dump()
+            cumulative_reward = reward.cumulative
 
-        obs, reward, done, info = env.step(action)
-        obs_dict = obs.model_dump()
-        cumulative_reward = reward.cumulative
+            rewards_list.append(reward.score)
 
-        rewards_list.append(reward.score)
+            # Create concise action representation
+            if action.action_type == ActionType.CLASSIFY:
+                act_repr = f"classify({action.category.value if action.category else 'null'})"
+            elif action.action_type == ActionType.INVESTIGATE:
+                act_repr = f"investigate({action.service_name})"
+            elif action.action_type == ActionType.REMEDIATE:
+                act_repr = f"remediate({action.service_name},{action.remediation_action.value if action.remediation_action else 'null'})"
+            elif action.action_type == ActionType.RESOLVE:
+                act_repr = f"resolve('{action.resolution_summary[:30] if action.resolution_summary else ''}')"
+            else:
+                act_repr = f"{action.action_type.value}"
 
-        # Create concise action representation
-        if action.action_type == ActionType.CLASSIFY:
-            act_repr = f"classify({action.category.value if action.category else 'null'})"
-        elif action.action_type == ActionType.INVESTIGATE:
-            act_repr = f"investigate({action.service_name})"
-        elif action.action_type == ActionType.REMEDIATE:
-            act_repr = f"remediate({action.service_name},{action.remediation_action.value if action.remediation_action else 'null'})"
-        elif action.action_type == ActionType.RESOLVE:
-            act_repr = f"resolve('{action.resolution_summary[:30] if action.resolution_summary else ''}')"
-        else:
-            act_repr = f"{action.action_type.value}"
+            error_str = last_action_error if last_action_error else 'null'
 
-        error_str = last_action_error if last_action_error else 'null'
+            # [STEP] step=<step_num> action=<action_repr> reward=<0.00> done=<bool> error=<null|str>
+            print(f"[STEP] step={step_num} action={act_repr} reward={reward.score:.2f} done={str(done).lower()} error={error_str}", flush=True)
 
-        # [STEP] step=<step_num> action=<action_repr> reward=<0.00> done=<bool> error=<null|str>
-        print(f"[STEP] step={step_num} action={act_repr} reward={reward.score:.2f} done={str(done).lower()} error={error_str}", flush=True)
+            history.append({"obs": obs_text, "action": action_dict})
 
-        history.append({"obs": obs_text, "action": action_dict})
+            if done:
+                break
+            time.sleep(0.1)  # rate limit guard
 
-        if done:
-            break
-        time.sleep(0.1)  # rate limit guard
+    except Exception as global_e:
+        print(f"[ERROR] Episode failed: {global_e}", file=sys.stderr)
+        
+    finally:
+        # Final grader score
+        grader_result = env.grade()
+        grader_result["task_id"] = task_id
+        grader_result["scenario_index"] = scenario_index
 
-    # Final grader score
-    grader_result = env.grade()
-    grader_result["task_id"] = task_id
-    grader_result["scenario_index"] = scenario_index
-
-    success = "true" if grader_result["score"] > 0 else "false"
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards_list)
-    # [END] success=<bool> steps=<num> score=<score_2_dec> rewards=<comma_sep_rewards>
-    print(f"[END] success={success} steps={step_num} score={grader_result['score']:.2f} rewards={rewards_str}", flush=True)
+        success = "true" if grader_result["score"] > 0 else "false"
+        rewards_str = ",".join(f"{r:.2f}" for r in rewards_list)
+        # [END] success=<bool> steps=<num> score=<score_2_dec> rewards=<comma_sep_rewards>
+        print(f"[END] success={success} steps={step_num} score={grader_result['score']:.2f} rewards={rewards_str}", flush=True)
 
     return grader_result
 
