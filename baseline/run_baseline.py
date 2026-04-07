@@ -103,7 +103,10 @@ class BaselineAgent:
 
         for h in history:
             messages.append({"role": "user",    "content": h["obs"]})
-            messages.append({"role": "assistant", "content": json.dumps(h["action"])})
+
+            # Use pre-serialized JSON if available, fallback to json.dumps for backwards compatibility
+            content = h["action_json"] if "action_json" in h else json.dumps(h["action"])
+            messages.append({"role": "assistant", "content": content})
 
         messages.append({"role": "user", "content": observation_text})
 
@@ -215,7 +218,7 @@ def run_episode(
         obs_dict = obs.model_dump()
         cumulative_reward = reward.cumulative
 
-        history.append({"obs": obs_text, "action": action_dict})
+        history.append({"obs": obs_text, "action": action_dict, "action_json": json.dumps(action_dict)})
 
         if verbose:
             print(f"    Reward: {reward.score:+.3f} | Cumulative: {reward.cumulative:.3f}")
