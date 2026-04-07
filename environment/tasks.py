@@ -386,6 +386,10 @@ TASK_3_SCENARIOS = [
                 RemediationAction.CLEAR_DISK_SPACE,
                 RemediationAction.RESTART_SERVICE,
             ],
+            "correct_remediation_values": {
+                RemediationAction.CLEAR_DISK_SPACE.value,
+                RemediationAction.RESTART_SERVICE.value,
+            },
             "min_investigations": 3,
             "resolution_keywords": ["disk", "redis", "cluster", "feature"],
         },
@@ -474,6 +478,10 @@ TASK_3_SCENARIOS = [
                 RemediationAction.ROTATE_CREDENTIALS,
                 RemediationAction.UPDATE_CONFIG,
             ],
+            "correct_remediation_values": {
+                RemediationAction.ROTATE_CREDENTIALS.value,
+                RemediationAction.UPDATE_CONFIG.value,
+            },
             "min_investigations": 3,
             "resolution_keywords": ["certificate", "tls", "expired", "cert"],
         },
@@ -665,7 +673,9 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
 
     # Remediation quality
     applied = set(obs.get("remediation_applied", []))
-    correct = set(r.value for r in gt.get("correct_remediations", []))
+    correct = gt.get("correct_remediation_values", set())
+    if not correct and "correct_remediations" in gt:
+        correct = set(r.value for r in gt.get("correct_remediations", []))
     rem_score = len(applied & correct) / len(correct) if correct else 1.0
     # Penalise wrong remediations
     wrong = applied - correct
