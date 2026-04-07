@@ -51,8 +51,8 @@ class IncidentResponseEnv:
 
         task = TASKS[task_id]
         scenarios = task["scenarios"]
-        if scenario_index >= len(scenarios):
-            scenario_index = scenario_index % len(scenarios)
+        if scenario_index < 0 or scenario_index >= len(scenarios):
+            raise ValueError(f"Invalid scenario_index {scenario_index} for task '{task_id}'. Must be between 0 and {len(scenarios) - 1}.")
 
         scenario = scenarios[scenario_index]
 
