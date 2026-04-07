@@ -85,9 +85,19 @@ class IncidentResponseEnv:
             cumulative_score=0.0,
             step_history=[],
         )
+
+        # Precompute correct remediation values to avoid repeatedly generating sets in _handle_remediate
+        gt = scenario["ground_truth"]
+        gt_rems = gt.get("correct_remediations", [])
+        gt_rem_single = gt.get("correct_remediation", None)
+        if gt_rem_single:
+            gt_rems = gt_rems + [gt_rem_single]
+        correct_remediation_values = frozenset(r.value for r in gt_rems)
+
         # Attach metadata not tracked in EnvironmentState directly
         self._state.__dict__["_scenario"] = scenario
         self._state.__dict__["_task_id"] = task_id
+        self._state.__dict__["_correct_remediation_values"] = correct_remediation_values
 
         return obs
 
@@ -272,13 +282,8 @@ class IncidentResponseEnv:
 
         obs.remediation_applied.append(rem_val)
 
-        # Check correctness
-        gt_rems = gt.get("correct_remediations", [])
-        gt_rem_single = gt.get("correct_remediation", None)
-        if gt_rem_single:
-            gt_rems = gt_rems + [gt_rem_single]
-
-        correct_values = {r.value for r in gt_rems}
+        # Check correctness using the precomputed frozenset from the environment state
+        correct_values = self._state.__dict__["_correct_remediation_values"]
         correct = rem_val in correct_values
         score = 0.20 if correct else -0.10
 
