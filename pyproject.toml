@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incident-response-openenv"
+version = "1.0.0"
+description = "An OpenEnv-compliant simulation of production incident response."
+authors = [
+    { name = "OpenEnv Submission", email = "openenv@example.com" }
+]
+license = { text = "MIT" }
+dependencies = [
+    "fastapi==0.111.0",
+    "uvicorn[standard]==0.29.0",
+    "pydantic>=2.8",
+    "pyyaml==6.0.1",
+    "openai==1.30.1",
+    "requests==2.32.2",
+    "httpx==0.27.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23"
+]
+
+[tool.setuptools]
+packages = ["api", "environment", "baseline"]
