@@ -1,17 +1,3 @@
-"""
-FastAPI application for the Incident Response OpenEnv environment.
-
-Endpoints
----------
-POST /reset              — Start a new episode
-POST /step               — Submit an action
-GET  /state              — Full internal state (includes ground truth)
-GET  /tasks              — Task list + action schema
-POST /grader             — Grade the current episode
-POST /baseline           — Run the baseline inference script and return scores
-GET  /health             — Health-check
-"""
-
 import os
 
 import sys
@@ -100,9 +86,7 @@ def health():
 
 @app.post("/reset", response_model=Observation)
 
-def reset(req: ResetRequest):
-
-    """Start a fresh episode for the given task."""
+def reset(req: ResetRequest = ResetRequest()):
 
     try:
 
