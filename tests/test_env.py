@@ -251,6 +251,12 @@ class TestSpecCompliance:
         for task_id in TASKS:
             assert callable(GRADERS[task_id])
 
+    def test_invalid_scenario_index_raises_valueerror(self, env):
+        with pytest.raises(ValueError, match="Invalid scenario_index"):
+            env.reset("alert_classification", -1)
+        with pytest.raises(ValueError, match="Invalid scenario_index"):
+            env.reset("alert_classification", 99)
+
     def test_cumulative_reward_non_decreasing_good_actions(self, env):
         env.reset("root_cause_analysis", 0)
         prev = 0.0
