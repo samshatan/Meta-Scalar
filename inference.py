@@ -34,7 +34,9 @@ except ImportError:
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY") or os.environ.get("OPENAI_API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
-BENCHMARK = os.getenv("MY_ENV_V4_BENCHMARK", "incident-response-openenv")
+BENCHMARK = os.getenv("BENCHMARK") or "incident-response-openenv"
+MAX_STEPS = 20  # Max steps for the longest task
+TEMPERATURE = 0.0 # Standardize for evaluation
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -171,7 +173,8 @@ def run_episode(
     rewards_list = []
 
     model_used = agent.model if agent else "heuristic"
-    print(f"[START] task={task_id} env={BENCHMARK} model={model_used}")
+    # [START] task=<task_name> env=<env_name> model=<model_name>
+    print(f"[START] task={task_id} env={BENCHMARK} model={model_used}", flush=True)
 
     step_num = 0
     while not done:
@@ -208,10 +211,22 @@ def run_episode(
 
         rewards_list.append(reward.score)
 
-        action_str = json.dumps(action_dict, separators=(',', ':'))
+        # Create concise action representation
+        if action.action_type == ActionType.CLASSIFY:
+            act_repr = f"classify({action.category.value if action.category else 'null'})"
+        elif action.action_type == ActionType.INVESTIGATE:
+            act_repr = f"investigate({action.service_name})"
+        elif action.action_type == ActionType.REMEDIATE:
+            act_repr = f"remediate({action.service_name},{action.remediation_action.value if action.remediation_action else 'null'})"
+        elif action.action_type == ActionType.RESOLVE:
+            act_repr = f"resolve('{action.resolution_summary[:30] if action.resolution_summary else ''}')"
+        else:
+            act_repr = f"{action.action_type.value}"
+
         error_str = last_action_error if last_action_error else 'null'
 
-        print(f"[STEP] step={step_num} action={action_str} reward={reward.score:.2f} done={str(done).lower()} error={error_str}")
+        # [STEP] step=<step_num> action=<action_repr> reward=<0.00> done=<bool> error=<null|str>
+        print(f"[STEP] step={step_num} action={act_repr} reward={reward.score:.2f} done={str(done).lower()} error={error_str}", flush=True)
 
         history.append({"obs": obs_text, "action": action_dict})
 
@@ -224,9 +239,10 @@ def run_episode(
     grader_result["task_id"] = task_id
     grader_result["scenario_index"] = scenario_index
 
-    success = str(grader_result["score"] > 0).lower()
+    success = "true" if grader_result["score"] > 0 else "false"
     rewards_str = ",".join(f"{r:.2f}" for r in rewards_list)
-    print(f"[END] success={success} steps={step_num} score={grader_result['score']:.2f} rewards={rewards_str}")
+    # [END] success=<bool> steps=<num> score=<score_2_dec> rewards=<comma_sep_rewards>
+    print(f"[END] success={success} steps={step_num} score={grader_result['score']:.2f} rewards={rewards_str}", flush=True)
 
     return grader_result
 
