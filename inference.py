@@ -171,6 +171,7 @@ def run_episode(
     done = False
     cumulative_reward = 0.0
     rewards_list = []
+    step_num = 0
 
     model_used = agent.model if agent else "heuristic"
     # [START] task=<task_name> env=<env_name> model=<model_name>
