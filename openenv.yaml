@@ -1,0 +1,206 @@
+name: incident-response-openenv
+version: "1.0.0"
+description: >
+  An OpenEnv-compliant simulation of production incident response.
+  AI agents act as on-call SREs: they classify firing alerts, investigate
+  service logs, apply targeted remediations, and resolve incidents.
+  Three tasks span easy → hard difficulty, rewarding correct diagnosis,
+  investigative efficiency, and remediation accuracy.
+
+tags:
+  - openenv
+  - incident-response
+  - sre
+  - devops
+  - real-world
+
+authors:
+  - name: OpenEnv Submission
+    email: openenv@example.com
+
+license: MIT
+
+# ── OpenEnv spec compliance ──────────────────────────────────────────────────
+
+spec_version: "0.1"
+
+endpoints:
+  reset:  POST /reset
+  step:   POST /step
+  state:  GET  /state
+  tasks:  GET  /tasks
+  grader: POST /grader
+  baseline: POST /baseline
+
+# ── Action space ─────────────────────────────────────────────────────────────
+
+action_space:
+  type: object
+  description: >
+    A structured action with a required `action_type` and conditional fields
+    depending on the action type. See /tasks for per-task schema.
+  properties:
+    action_type:
+      type: string
+      enum: [classify, investigate, remediate, escalate, resolve]
+      description: The category of action to perform.
+    category:
+      type: string
+      enum:
+        - database_connection
+        - memory_leak
+        - network_partition
+        - dependency_failure
+        - resource_exhaustion
+        - configuration_error
+      description: Incident category (required for classify).
+    service_name:
+      type: string
+      description: Target service (required for investigate and remediate).
+    remediation_action:
+      type: string
+      enum:
+        - restart_service
+        - scale_up
+        - flush_cache
+        - rollback_deployment
+        - update_config
+        - kill_long_running_query
+        - increase_connection_pool
+        - restore_network_policy
+        - clear_disk_space
+        - rotate_credentials
+      description: Remediation to apply (required for remediate).
+    escalation_reason:
+      type: string
+      description: Why the agent is escalating (required for escalate).
+    resolution_summary:
+      type: string
+      description: Human-readable incident summary (required for resolve).
+
+# ── Observation space ────────────────────────────────────────────────────────
+
+observation_space:
+  type: object
+  description: >
+    The agent's view of the current incident state. Contains alerts, service
+    health metrics, logs revealed by investigation actions, and progress tracking.
+  properties:
+    incident_id:        {type: string}
+    task_id:            {type: string}
+    task_description:   {type: string}
+    alerts:
+      type: array
+      items:
+        type: object
+        properties:
+          alert_id:   {type: string}
+          service:    {type: string}
+          severity:   {type: string, enum: [P1, P2, P3]}
+          message:    {type: string}
+          fired_at:   {type: string, format: date-time}
+          metrics:    {type: object}
+    available_services: {type: array, items: {type: string}}
+    service_health:
+      type: array
+      items:
+        type: object
+        properties:
+          name:             {type: string}
+          status:           {type: string, enum: [healthy, degraded, down]}
+          error_rate:       {type: number, minimum: 0, maximum: 1}
+          p99_latency_ms:   {type: number}
+          pod_count:        {type: integer}
+    visible_logs:
+      type: array
+      description: Log lines revealed by investigate actions.
+      items:
+        type: object
+        properties:
+          timestamp: {type: string}
+          service:   {type: string}
+          level:     {type: string, enum: [ERROR, WARN, INFO]}
+          message:   {type: string}
+    classified:           {type: boolean}
+    classification:       {type: string, nullable: true}
+    investigations_done:  {type: array, items: {type: string}}
+    remediation_applied:  {type: array, items: {type: string}}
+    resolved:             {type: boolean}
+    step:                 {type: integer}
+    max_steps:            {type: integer}
+    message:              {type: string}
+
+# ── Reward space ─────────────────────────────────────────────────────────────
+
+reward_space:
+  type: object
+  description: >
+    Per-step reward in [0.0, 1.0] plus a running cumulative score.
+    Rewards are shaped across the full trajectory — not sparse.
+  properties:
+    score:      {type: number, minimum: 0, maximum: 1}
+    cumulative: {type: number, minimum: 0, maximum: 1}
+    breakdown:  {type: object}
+    feedback:   {type: string}
+
+# ── Tasks ─────────────────────────────────────────────────────────────────────
+
+tasks:
+  - id: alert_classification
+    name: Alert Classification
+    difficulty: easy
+    max_steps: 8
+    description: >
+      A single alert has fired. The agent may investigate services then must
+      classify the incident into the correct category. Rewards correctness
+      and efficiency (fewer steps = higher bonus).
+    grader:
+      metric: classification_accuracy_x_efficiency
+      range: [0.0, 1.0]
+
+  - id: root_cause_analysis
+    name: Root Cause Analysis
+    difficulty: medium
+    max_steps: 12
+    description: >
+      Multiple services are impacted. The agent must investigate at least two
+      services to distinguish symptoms from the root cause, classify correctly,
+      and resolve. Partial credit for each completed phase.
+    grader:
+      metric: weighted_phase_score
+      weights:
+        classification:  0.30
+        investigation:   0.30
+        root_identified: 0.25
+        resolved:        0.15
+      range: [0.0, 1.0]
+
+  - id: full_incident_response
+    name: Full Incident Response
+    difficulty: hard
+    max_steps: 20
+    description: >
+      A complex, platform-wide outage with multiple root-cause services.
+      The agent must classify, investigate ≥3 services, apply correct
+      remediations to all root-cause services, and resolve with a keyword-rich
+      summary. Every phase is scored independently.
+    grader:
+      metric: multi_phase_composite
+      weights:
+        classification:     0.20
+        investigation:      0.20
+        root_coverage:      0.25
+        remediation:        0.20
+        resolution_quality: 0.15
+      range: [0.0, 1.0]
+
+# ── Baseline scores (heuristic agent, no LLM) ─────────────────────────────────
+
+baseline_scores:
+  agent: heuristic (no LLM)
+  alert_classification:   0.45
+  root_cause_analysis:    0.38
+  full_incident_response: 0.22
+  notes: >
+    GPT-4o-mini scores approximately 0.72 / 0.61 / 0.48 on the three tasks.
+    Frontier models (GPT-4o, Claude 3.5) score approximately 0.88 / 0.79 / 0.65.
