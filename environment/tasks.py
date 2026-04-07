@@ -2,9 +2,9 @@
 Task definitions and agent graders for the Incident Response environment.
 
 Three tasks with increasing difficulty:
-  Task 1 – alert_classification  (easy)
-  Task 2 – root_cause_analysis   (medium)
-  Task 3 – full_incident_response (hard)
+Task 1 – alert_classification  (easy)
+Task 2 – root_cause_analysis   (medium)
+Task 3 – full_incident_response (hard)
 """
 
 import copy
@@ -58,21 +58,21 @@ TASK_1_SCENARIOS = [
         "log_map": {
             "payment-service": [
                 LogEntry(timestamp="2024-06-15T02:13:55Z", service="payment-service",
-                         level="ERROR", message="Connection pool exhausted — queue depth: 512"),
+                    level="ERROR", message="Connection pool exhausted — queue depth: 512"),
                 LogEntry(timestamp="2024-06-15T02:13:56Z", service="payment-service",
-                         level="ERROR", message="Timeout waiting for DB connection after 30 s"),
+                    level="ERROR", message="Timeout waiting for DB connection after 30 s"),
                 LogEntry(timestamp="2024-06-15T02:13:58Z", service="payment-service",
-                         level="WARN",  message="Retrying transaction (attempt 3/3)"),
+                    level="WARN",  message="Retrying transaction (attempt 3/3)"),
             ],
             "postgres-primary": [
                 LogEntry(timestamp="2024-06-15T02:13:50Z", service="postgres-primary",
-                         level="WARN",  message="max_connections=100 reached, refusing new connections"),
+                    level="WARN",  message="max_connections=100 reached, refusing new connections"),
                 LogEntry(timestamp="2024-06-15T02:13:52Z", service="postgres-primary",
-                         level="ERROR", message="Connection from 10.0.1.15 rejected: too many clients"),
+                    level="ERROR", message="Connection from 10.0.1.15 rejected: too many clients"),
             ],
             "redis-cache": [
                 LogEntry(timestamp="2024-06-15T02:13:55Z", service="redis-cache",
-                         level="INFO",  message="All operations nominal"),
+                    level="INFO",  message="All operations nominal"),
             ],
         },
         "ground_truth": {
@@ -107,19 +107,19 @@ TASK_1_SCENARIOS = [
         "log_map": {
             "image-worker": [
                 LogEntry(timestamp="2024-06-15T09:29:00Z", service="image-worker",
-                         level="WARN",  message="GC pause 820 ms — heap 3.8 GB / 4 GB"),
+                    level="WARN",  message="GC pause 820 ms — heap 3.8 GB / 4 GB"),
                 LogEntry(timestamp="2024-06-15T09:29:30Z", service="image-worker",
-                         level="ERROR", message="OutOfMemoryError: unable to allocate 512 MB"),
+                    level="ERROR", message="OutOfMemoryError: unable to allocate 512 MB"),
                 LogEntry(timestamp="2024-06-15T09:29:45Z", service="image-worker",
-                         level="ERROR", message="Image cache not being evicted — TTL logic bypassed"),
+                    level="ERROR", message="Image cache not being evicted — TTL logic bypassed"),
             ],
             "object-store": [
                 LogEntry(timestamp="2024-06-15T09:29:50Z", service="object-store",
-                         level="INFO",  message="Serving requests normally"),
+                    level="INFO",  message="Serving requests normally"),
             ],
             "message-queue": [
                 LogEntry(timestamp="2024-06-15T09:29:50Z", service="message-queue",
-                         level="INFO",  message="Queue depth 24, within normal range"),
+                    level="INFO",  message="Queue depth 24, within normal range"),
             ],
         },
         "ground_truth": {
@@ -149,17 +149,17 @@ TASK_2_SCENARIOS = [
         ),
         "alerts": [
             Alert(alert_id="ALT-010", service="checkout-service",
-                  severity="P1", message="502 Bad Gateway rate 45%",
-                  fired_at="2024-06-16T14:00:00Z",
-                  metrics={"error_rate": 0.45, "p99_latency_ms": 12000.0}),
+                severity="P1", message="502 Bad Gateway rate 45%",
+                fired_at="2024-06-16T14:00:00Z",
+                metrics={"error_rate": 0.45, "p99_latency_ms": 12000.0}),
             Alert(alert_id="ALT-011", service="inventory-service",
-                  severity="P2", message="502 Bad Gateway rate 38%",
-                  fired_at="2024-06-16T14:00:30Z",
-                  metrics={"error_rate": 0.38, "p99_latency_ms": 9800.0}),
+                severity="P2", message="502 Bad Gateway rate 38%",
+                fired_at="2024-06-16T14:00:30Z",
+                metrics={"error_rate": 0.38, "p99_latency_ms": 9800.0}),
             Alert(alert_id="ALT-012", service="notification-service",
-                  severity="P3", message="Delivery failure rate 60%",
-                  fired_at="2024-06-16T14:01:00Z",
-                  metrics={"error_rate": 0.60}),
+                severity="P3", message="Delivery failure rate 60%",
+                fired_at="2024-06-16T14:01:00Z",
+                metrics={"error_rate": 0.60}),
         ],
         "available_services": [
             "checkout-service", "inventory-service", "notification-service",
@@ -175,31 +175,31 @@ TASK_2_SCENARIOS = [
         "log_map": {
             "checkout-service": [
                 LogEntry(timestamp="2024-06-16T13:59:55Z", service="checkout-service",
-                         level="ERROR", message="Failed to validate JWT: connection refused to auth-service:8080"),
+                    level="ERROR", message="Failed to validate JWT: connection refused to auth-service:8080"),
                 LogEntry(timestamp="2024-06-16T13:59:56Z", service="checkout-service",
-                         level="ERROR", message="Auth check failed — returning 502 to client"),
+                    level="ERROR", message="Auth check failed — returning 502 to client"),
             ],
             "inventory-service": [
                 LogEntry(timestamp="2024-06-16T13:59:58Z", service="inventory-service",
-                         level="ERROR", message="Authorization middleware: auth-service unreachable"),
+                    level="ERROR", message="Authorization middleware: auth-service unreachable"),
                 LogEntry(timestamp="2024-06-16T13:59:59Z", service="inventory-service",
-                         level="WARN",  message="Fallback: rejecting all unauthenticated requests"),
+                    level="WARN",  message="Fallback: rejecting all unauthenticated requests"),
             ],
             "notification-service": [
                 LogEntry(timestamp="2024-06-16T14:00:10Z", service="notification-service",
-                         level="ERROR", message="Cannot verify sender token — auth-service timeout"),
+                    level="ERROR", message="Cannot verify sender token — auth-service timeout"),
             ],
             "auth-service": [
                 LogEntry(timestamp="2024-06-16T13:58:00Z", service="auth-service",
-                         level="ERROR", message="OOMKilled — container restarting (CrashLoopBackOff)"),
+                    level="ERROR", message="OOMKilled — container restarting (CrashLoopBackOff)"),
                 LogEntry(timestamp="2024-06-16T13:58:30Z", service="auth-service",
-                         level="ERROR", message="Startup failed: cannot read secret /vault/token — permission denied"),
+                    level="ERROR", message="Startup failed: cannot read secret /vault/token — permission denied"),
                 LogEntry(timestamp="2024-06-16T13:58:32Z", service="auth-service",
-                         level="ERROR", message="Configuration error: VAULT_ROLE not set"),
+                    level="ERROR", message="Configuration error: VAULT_ROLE not set"),
             ],
             "postgres-replica": [
                 LogEntry(timestamp="2024-06-16T14:00:00Z", service="postgres-replica",
-                         level="INFO",  message="Replication lag 0 ms — nominal"),
+                    level="INFO",  message="Replication lag 0 ms — nominal"),
             ],
         },
         "ground_truth": {
@@ -207,6 +207,77 @@ TASK_2_SCENARIOS = [
             "root_service": "auth-service",
             "correct_remediation": RemediationAction.UPDATE_CONFIG,
             "min_investigations": 2,  # must look at at least 2 services
+        },
+        "max_steps": 12,
+    },
+    # ── Scenario 2: dependency failure (payment gateway timeout) ────────────────
+    {
+        "incident_id": "INC-2002",
+        "description": (
+            "The order-service and reporting-service are both showing elevated "
+            "error rates. Multiple alerts indicate downstream timeouts. Investigate "
+            "to find the root cause service and resolve."
+        ),
+        "alerts": [
+            Alert(alert_id="ALT-013", service="order-service",
+                severity="P1", message="Error rate 52% — order placement failures",
+                fired_at="2024-07-10T11:00:00Z",
+                metrics={"error_rate": 0.52, "p99_latency_ms": 14500.0}),
+            Alert(alert_id="ALT-014", service="reporting-service",
+                severity="P2", message="Report generation timeout 70%",
+                fired_at="2024-07-10T11:00:30Z",
+                metrics={"error_rate": 0.70}),
+            Alert(alert_id="ALT-015", service="analytics-worker",
+                severity="P3", message="Job queue stalled — no completions in 5 min",
+                fired_at="2024-07-10T11:01:00Z",
+                metrics={"queue_depth": 320.0}),
+        ],
+        "available_services": [
+            "order-service", "reporting-service", "analytics-worker",
+            "postgres-primary", "redis-cache",
+        ],
+        "service_health": [
+            _health("order-service",      "degraded", 0.52, 14500.0, 3),
+            _health("reporting-service",  "degraded", 0.70,  9000.0, 2),
+            _health("analytics-worker",   "degraded", 0.30,  5000.0, 2),
+            _health("postgres-primary",   "down",     1.00,     0.0, 1),
+            _health("redis-cache",        "healthy",  0.00,     3.0, 2),
+        ],
+        "log_map": {
+            "order-service": [
+                LogEntry(timestamp="2024-07-10T10:59:45Z", service="order-service",
+                    level="ERROR", message="DB query timeout after 30 s — postgres-primary unreachable"),
+                LogEntry(timestamp="2024-07-10T10:59:47Z", service="order-service",
+                    level="ERROR", message="FATAL: terminating connection due to administrator command"),
+            ],
+            "reporting-service": [
+                LogEntry(timestamp="2024-07-10T10:59:50Z", service="reporting-service",
+                    level="ERROR", message="Connection to postgres-primary refused: host unreachable"),
+                LogEntry(timestamp="2024-07-10T10:59:52Z", service="reporting-service",
+                    level="WARN",  message="Retrying DB query — attempt 3/3 failed"),
+            ],
+            "analytics-worker": [
+                LogEntry(timestamp="2024-07-10T11:00:00Z", service="analytics-worker",
+                    level="ERROR", message="Cannot open cursor — postgresql driver error: connection reset"),
+            ],
+            "postgres-primary": [
+                LogEntry(timestamp="2024-07-10T10:58:00Z", service="postgres-primary",
+                    level="ERROR", message="Out of memory: kill process 1234 (postgres) score 998"),
+                LogEntry(timestamp="2024-07-10T10:58:05Z", service="postgres-primary",
+                         level="ERROR", message="OOM killer terminated postmaster — database shutting down"),
+                LogEntry(timestamp="2024-07-10T10:58:10Z", service="postgres-primary",
+                         level="ERROR", message="Server process (PID 1234) was terminated by signal 9 (Killed)"),
+            ],
+            "redis-cache": [
+                LogEntry(timestamp="2024-07-10T11:00:00Z", service="redis-cache",
+                         level="INFO",  message="All keys within TTL — no anomalies"),
+            ],
+        },
+        "ground_truth": {
+            "category": IncidentCategory.MEMORY_LEAK,
+            "root_service": "postgres-primary",
+            "correct_remediation": RemediationAction.RESTART_SERVICE,
+            "min_investigations": 2,
         },
         "max_steps": 12,
     },
@@ -317,6 +388,94 @@ TASK_3_SCENARIOS = [
             ],
             "min_investigations": 3,
             "resolution_keywords": ["disk", "redis", "cluster", "feature"],
+        },
+        "max_steps": 20,
+    },
+    # ── Scenario 2: TLS certificate expiry cascading outage ─────────────────────
+    {
+        "incident_id": "INC-3002",
+        "description": (
+            "CRITICAL: All HTTPS traffic to the platform is failing. Multiple "
+            "services report TLS handshake errors and certificate validation "
+            "failures. The mobile app, web frontend, and partner API are all "
+            "down. Conduct a full incident response: classify, investigate "
+            "relevant services, apply the correct remediation, and resolve."
+        ),
+        "alerts": [
+            Alert(alert_id="ALT-030", service="api-gateway",
+                  severity="P1", message="TLS handshake error rate 98% — all HTTPS terminated",
+                  fired_at="2024-08-01T00:00:00Z",
+                  metrics={"error_rate": 0.98, "tls_errors_per_min": 12000.0}),
+            Alert(alert_id="ALT-031", service="mobile-backend",
+                  severity="P1", message="SSL certificate verification failed — all clients rejected",
+                  fired_at="2024-08-01T00:00:05Z",
+                  metrics={"error_rate": 0.99}),
+            Alert(alert_id="ALT-032", service="partner-api",
+                  severity="P2", message="Mutual TLS auth failure 100%",
+                  fired_at="2024-08-01T00:00:10Z",
+                  metrics={"error_rate": 1.00}),
+            Alert(alert_id="ALT-033", service="health-monitor",
+                  severity="P3", message="Certificate expiry check: *.platform.io expired 2 min ago",
+                  fired_at="2024-08-01T00:01:00Z",
+                  metrics={"days_until_expiry": -0.001}),
+        ],
+        "available_services": [
+            "api-gateway", "mobile-backend", "partner-api",
+            "cert-manager", "health-monitor", "postgres-primary",
+        ],
+        "service_health": [
+            _health("api-gateway",     "down",    1.00,     0.0, 4),
+            _health("mobile-backend", "down",    1.00,     0.0, 3),
+            _health("partner-api",    "down",    1.00,     0.0, 2),
+            _health("cert-manager",   "degraded",0.20,  2400.0, 1),
+            _health("health-monitor", "degraded",0.00,   120.0, 1),
+            _health("postgres-primary","healthy",0.00,    15.0, 1),
+        ],
+        "log_map": {
+            "api-gateway": [
+                LogEntry(timestamp="2024-08-01T00:00:00Z", service="api-gateway",
+                         level="ERROR", message="TLS: certificate has expired — notAfter=2024-07-31T23:58:00Z"),
+                LogEntry(timestamp="2024-08-01T00:00:01Z", service="api-gateway",
+                         level="ERROR", message="SSL_CTX_use_certificate: certificate verify failed — rejecting all connections"),
+            ],
+            "mobile-backend": [
+                LogEntry(timestamp="2024-08-01T00:00:03Z", service="mobile-backend",
+                         level="ERROR", message="x509: certificate has expired or is not yet valid"),
+                LogEntry(timestamp="2024-08-01T00:00:04Z", service="mobile-backend",
+                         level="ERROR", message="HTTPS listener shutdown — cannot bind expired certificate"),
+            ],
+            "partner-api": [
+                LogEntry(timestamp="2024-08-01T00:00:05Z", service="partner-api",
+                         level="ERROR", message="Mutual TLS: peer certificate verification failed — chain expired"),
+            ],
+            "cert-manager": [
+                LogEntry(timestamp="2024-07-28T12:00:00Z", service="cert-manager",
+                         level="WARN",  message="Certificate *.platform.io expiring in 3 days — renewal pending"),
+                LogEntry(timestamp="2024-07-31T22:00:00Z", service="cert-manager",
+                         level="ERROR", message="ACME challenge failed — DNS propagation timeout"),
+                LogEntry(timestamp="2024-07-31T23:58:00Z", service="cert-manager",
+                         level="ERROR", message="Certificate *.platform.io EXPIRED — renewal failed 3 times"),
+            ],
+            "health-monitor": [
+                LogEntry(timestamp="2024-08-01T00:01:00Z", service="health-monitor",
+                         level="ERROR", message="SSL check *.platform.io: EXPIRED 2 minutes ago"),
+                LogEntry(timestamp="2024-08-01T00:01:01Z", service="health-monitor",
+                         level="ERROR", message="Certificate renewal blocked: DNS challenge token not found at /.well-known/acme-challenge/"),
+            ],
+            "postgres-primary": [
+                LogEntry(timestamp="2024-08-01T00:01:00Z", service="postgres-primary",
+                         level="INFO",  message="All connections healthy — no anomalies"),
+            ],
+        },
+        "ground_truth": {
+            "category": IncidentCategory.CONFIGURATION_ERROR,
+            "root_services": ["cert-manager"],
+            "correct_remediations": [
+                RemediationAction.ROTATE_CREDENTIALS,
+                RemediationAction.UPDATE_CONFIG,
+            ],
+            "min_investigations": 3,
+            "resolution_keywords": ["certificate", "tls", "expired", "cert"],
         },
         "max_steps": 20,
     },

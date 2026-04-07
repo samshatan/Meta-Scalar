@@ -135,11 +135,13 @@ observation_space:
 reward_space:
   type: object
   description: >
-    Per-step reward in [0.0, 1.0] plus a running cumulative score.
+    Per-step reward in [-1.0, 1.0] plus a running cumulative score.
     Rewards are shaped across the full trajectory — not sparse.
+    Step rewards can be negative (penalties for duplicate/wrong actions).
+    The final grader score is always normalised to [0.0, 1.0].
   properties:
-    score:      {type: number, minimum: 0, maximum: 1}
-    cumulative: {type: number, minimum: 0, maximum: 1}
+    score:      {type: number, minimum: -1, maximum: 1}
+    cumulative: {type: number, minimum: -1, maximum: 1}
     breakdown:  {type: object}
     feedback:   {type: string}
 
@@ -162,23 +164,26 @@ tasks:
     name: Root Cause Analysis
     difficulty: medium
     max_steps: 12
+    scenario_count: 2
     description: >
       Multiple services are impacted. The agent must investigate at least two
       services to distinguish symptoms from the root cause, classify correctly,
-      and resolve. Partial credit for each completed phase.
+      remediate the root service, and resolve. Partial credit for each completed phase.
     grader:
       metric: weighted_phase_score
       weights:
-        classification:  0.30
-        investigation:   0.30
+        classification:  0.25
+        investigation:   0.25
         root_identified: 0.25
-        resolved:        0.15
+        remediation:     0.15
+        resolved:        0.10
       range: [0.0, 1.0]
 
   - id: full_incident_response
     name: Full Incident Response
     difficulty: hard
     max_steps: 20
+    scenario_count: 2
     description: >
       A complex, platform-wide outage with multiple root-cause services.
       The agent must classify, investigate ≥3 services, apply correct
@@ -194,13 +199,16 @@ tasks:
         resolution_quality: 0.15
       range: [0.0, 1.0]
 
-# ── Baseline scores (heuristic agent, no LLM) ─────────────────────────────────
+# ── Baseline scores (heuristic agent — keyword matcher, no LLM) ─────────────
+# Run: python baseline/run_baseline.py --heuristic --output json
 
 baseline_scores:
-  agent: heuristic (no LLM)
-  alert_classification:   0.45
-  root_cause_analysis:    0.38
-  full_incident_response: 0.22
+  agent: heuristic (keyword matcher, no LLM)
+  alert_classification:   0.85   # 2 scenarios, avg: classify after log keywords
+  root_cause_analysis:    0.70   # 2 scenarios, avg: investigates all available, applies hardcoded fix
+  full_incident_response: 0.61   # 2 scenarios, avg: investigates all, partial right fix
   notes: >
+    Heuristic agent uses keyword matching on log messages with no LLM.
     GPT-4o-mini scores approximately 0.72 / 0.61 / 0.48 on the three tasks.
     Frontier models (GPT-4o, Claude 3.5) score approximately 0.88 / 0.79 / 0.65.
+    Scores are reproducible with --heuristic flag (deterministic, no API calls).

@@ -1,3 +1,21 @@
+---
+title: Incident Response OpenEnv
+emoji: 🚨
+colorFrom: red
+colorTo: orange
+sdk: docker
+app_port: 7860
+pinned: false
+tags:
+  - openenv
+  - sre
+  - incident-response
+  - devops
+  - agent-evaluation
+  - real-world
+license: mit
+---
+
 # 🚨 Incident Response OpenEnv
 
 > An OpenEnv-compliant environment for training and evaluating AI agents on
@@ -169,28 +187,32 @@ Frontier models should score ≥0.85.
 
 ### Task 2 — Root Cause Analysis _(medium)_
 
-**Step budget:** 12  
-**Grader:** weighted phase score (classification 30%, investigation 30%, root-service found 25%, resolved 15%)
+**Step budget:** 12 | **Scenarios:** 2  
+**Grader:** weighted phase score (classification 25%, investigation 25%, root-service found 25%, remediation 15%, resolved 10%)
 
-Multiple services show 502 errors. The real failure is upstream
-(e.g., auth-service in CrashLoopBackOff due to a missing config value).
+Multiple services show errors. The real failure is upstream
+(e.g., auth-service in CrashLoopBackOff due to a missing config value;
+or postgres OOM-killed bringing down all DB-dependent services).
 The agent must investigate ≥2 services to distinguish the root cause from
-downstream symptoms.
+downstream symptoms, apply the correct remediation, then resolve.
 
-**Expected difficulty:** Requires systematic investigation. GPT-4o-mini ~0.61.
+**Expected difficulty:** Requires systematic investigation + correct fix. GPT-4o-mini ~0.61.
 
 ---
 
 ### Task 3 — Full Incident Response _(hard)_
 
-**Step budget:** 20  
+**Step budget:** 20 | **Scenarios:** 2  
 **Grader:** multi-phase composite (classification 20%, investigation 20%, root-coverage 25%, remediation 20%, resolution-quality 15%)
 
-A platform-wide outage caused by disk exhaustion across two infrastructure
-services (Redis cluster + ML feature store), cascading to five application
-services. The agent must investigate ≥3 services, identify both root-cause
-services, apply both correct remediations, and resolve with a coherent summary
-that mentions the key failure terms.
+Scenario A: A platform-wide outage caused by disk exhaustion across two infrastructure
+services (Redis cluster + ML feature store), cascading to five application services.
+
+Scenario B: A TLS certificate expiry causes 100% HTTPS failure across the entire platform;
+the cert-manager renewal pipeline itself failed silently days earlier.
+
+The agent must investigate ≥3 services, identify all root-cause services, apply correct
+remediations, and resolve with a coherent summary that mentions key failure terms.
 
 **Expected difficulty:** Challenges frontier models. GPT-4o ~0.65.
 
@@ -207,6 +229,9 @@ that mentions the key failure terms.
 | `GET` | `/tasks` | Task list + action schemas |
 | `POST` | `/grader` | Grade current episode |
 | `POST` | `/baseline` | Run baseline script, return scores |
+
+> [!WARNING]
+> The `/state` endpoint exposes ground truth and the final grader result. It is intended for **evaluation wrappers and debugging only**, not for the agent to use as an observation space. Your agent should rely strictly on the `Observation` model returned by `/step` and `/reset`.
 
 ### Reset request body
 
@@ -285,13 +310,14 @@ curl -s -X POST http://localhost:7860/grader | python -m json.tool
 
 ## Baseline Scores
 
-| Task | Difficulty | Heuristic | GPT-4o-mini | GPT-4o |
-|---|---|---|---|---|
-| alert_classification | easy | 0.45 | 0.72 | 0.88 |
-| root_cause_analysis | medium | 0.38 | 0.61 | 0.79 |
-| full_incident_response | hard | 0.22 | 0.48 | 0.65 |
+| Task | Difficulty | Scenarios | Heuristic | GPT-4o-mini | GPT-4o |
+|---|---|---|---|---|---|
+| alert_classification | easy | 2 | 0.85 | 0.72 | 0.88 |
+| root_cause_analysis | medium | 2 | 0.70 | 0.61 | 0.79 |
+| full_incident_response | hard | 2 | 0.61 | 0.48 | 0.65 |
 
-_Heuristic agent uses keyword matching on logs; no LLM required._
+_Heuristic agent uses keyword matching on logs; no LLM required._  
+_Run_ `python baseline/run_baseline.py --heuristic --output json` _to reproduce._
 
 ---
 

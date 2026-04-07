@@ -292,12 +292,11 @@ class IncidentResponseEnv:
         if not action.resolution_summary:
             return {
                 "score": 0.0,
-                "msg": "resolve action requires 'resolution_summary'."
+                "msg": "resolve action requires 'resolution_summary'.",
             }
         summary = action.resolution_summary
-        obs.__dict__["resolution_summary"] = summary  # store for grader
+        obs.resolution_summary = summary  # proper field assignment — included in model_dump()
 
-        # Build obs dict manually to check resolved state for grader
         score = 0.10  # base for resolving
         keywords = gt.get("resolution_keywords", [])
         if keywords:
@@ -305,5 +304,9 @@ class IncidentResponseEnv:
             hits = sum(1 for k in keywords if k in lower_sum)
             score += 0.15 * (hits / len(keywords))
 
-        msg = f"Incident resolved. Summary: '{summary[:120]}...'" if len(summary) > 120 else f"Incident resolved. Summary: '{summary}'"
+        msg = (
+            f"Incident resolved. Summary: '{summary[:120]}...'"
+            if len(summary) > 120
+            else f"Incident resolved. Summary: '{summary}'"
+        )
         return {"score": score, "msg": msg}

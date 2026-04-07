@@ -148,6 +148,9 @@ class Observation(BaseModel):
     remediation_applied: List[str] = Field(default_factory=list)
     resolved: bool = False
 
+    # Resolution text (set when agent calls resolve action)
+    resolution_summary: Optional[str] = None
+
     # Episode metadata
     step: int = 0
     max_steps: int = 10
@@ -165,6 +168,9 @@ class Reward(BaseModel):
     `cumulative`: float in [-1.0, 1.0] — running total across the episode.
     `breakdown` : component scores (classification, diagnosis, remediation, efficiency)
     `feedback`  : plain-English explanation of why this reward was given
+
+    NOTE: Scores *can* be negative (penalty for wrong/duplicate actions).
+    The final grader score is always normalised to [0.0, 1.0].
     """
     score: float = Field(..., ge=-1.0, le=1.0)
     cumulative: float = Field(..., ge=-1.0, le=1.0)

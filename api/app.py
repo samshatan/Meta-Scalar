@@ -20,6 +20,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from environment.env import IncidentResponseEnv
@@ -62,6 +63,12 @@ class GraderResponse(BaseModel):
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Redirect root to the interactive API docs."""
+    return RedirectResponse(url="/docs")
+
 
 @app.get("/health")
 def health():
