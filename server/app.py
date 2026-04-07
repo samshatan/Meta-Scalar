@@ -1,4 +1,5 @@
 import os
+import uvicorn
 
 import sys
 
@@ -279,4 +280,13 @@ def baseline():
 
         scores = {"raw_output": result.stdout[:4000]}
 
+    except RuntimeError as e:
+        raise HTTPException(status_code=400, detail=f"Baseline script failed:\n{str(e)}")
     return {"status": "ok", "baseline_scores": scores}
+
+def main():
+    port = int(os.getenv("PORT", 7860))
+    uvicorn.run("server.app:app", host="0.0.0.0", port=port, reload=False)
+
+if __name__ == "__main__":
+    main()
