@@ -41,6 +41,8 @@ except ImportError:
     OpenAI = None
 
 HF_TOKEN = os.getenv("HF_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+API_KEY = OPENAI_API_KEY or HF_TOKEN
 
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 
@@ -99,15 +101,14 @@ class BaselineAgent:
 
     def __init__(self, model: str = MODEL_NAME):
 
-        if not HF_TOKEN:
-
-            raise RuntimeError("HF_TOKEN environment variable not set.")
+        if not API_KEY:
+            raise RuntimeError("Neither HF_TOKEN nor OPENAI_API_KEY environment variable is set.")
 
         if OpenAI is None:
 
             raise RuntimeError("openai package not installed. Run: pip install openai")
 
-        self.client = OpenAI(api_key=HF_TOKEN, base_url=API_BASE_URL)
+        self.client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
 
         self.model = model
 
@@ -465,39 +466,46 @@ def main():
 
         agent = BaselineAgent(model=args.model)
 
-    env = IncidentResponseEnv()
+    try:
+        env = IncidentResponseEnv()
+        task_ids = [args.task] if args.task else list(TASKS.keys())
+        all_results = {}
 
-    task_ids = [args.task] if args.task else list(TASKS.keys())
+        for task_id in task_ids:
+            task = TASKS[task_id]
+            scenario_results = []
+            for idx in range(len(task["scenarios"])):
+                result = run_episode(env, agent, task_id, scenario_index=idx, verbose=verbose)
+                scenario_results.append(result)
+                time.sleep(0.5)
 
-    all_results = {}
+            avg_score = sum(r["score"] for r in scenario_results) / len(scenario_results)
+            all_results[task_id] = {
+                "difficulty":      task["difficulty"],
+                "avg_score":       round(avg_score, 4),
+                "scenario_scores": [r["score"] for r in scenario_results],
+                "breakdowns":      [r["breakdown"] for r in scenario_results],
+            }
 
-    for task_id in task_ids:
+        if verbose:
+            print("\n" + "="*60)
+            print("BASELINE SUMMARY")
+            print("="*60)
+            for t, r in all_results.items():
+                print(f"  {t} ({r['difficulty']}): {r['avg_score']:.4f}")
+            if all_results:
+                overall = sum(r["avg_score"] for r in all_results.values()) / len(all_results)
+                print(f"\n  Overall average: {overall:.4f}")
+        else:
+            print(json.dumps(all_results, indent=2))
 
-        task = TASKS[task_id]
-
-        scenario_results = []
-
-        for idx in range(len(task["scenarios"])):
-
-            result = run_episode(env, agent, task_id, scenario_index=idx, verbose=verbose)
-
-            scenario_results.append(result)
-
-            time.sleep(0.5)
-
-        avg_score = sum(r["score"] for r in scenario_results) / len(scenario_results)
-
-        all_results[task_id] = {
-
-            "difficulty":      task["difficulty"],
-
-            "avg_score":       round(avg_score, 4),
-
-            "scenario_scores": [r["score"] for r in scenario_results],
-
-            "breakdowns":      [r["breakdown"] for r in scenario_results],
-
-        }
+    except Exception as e:
+        error_msg = f"Fatal error during execution: {e}"
+        if verbose:
+            print(f"\n[FATAL] {error_msg}")
+        else:
+            print(json.dumps({"error": error_msg}))
+        sys.exit(1)
 
 if __name__ == "__main__":
 
