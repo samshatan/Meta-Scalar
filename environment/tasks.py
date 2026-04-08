@@ -1036,6 +1036,9 @@ def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
 
     score = classification_correct * efficiency
 
+    # OpenEnv requires score strictly in (0, 1) — clamp away from the boundaries
+    score = max(0.001, min(0.999, score))
+
     return {
 
         "score": round(score, 4),
@@ -1099,6 +1102,9 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
              0.25 * root_investigated +
 
              0.15 * resolved_score)
+
+    # OpenEnv requires score strictly in (0, 1) — clamp away from the boundaries
+    score = max(0.001, min(0.999, score))
 
     return {
 
@@ -1206,6 +1212,9 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
              0.20 * rem_score +
 
              0.15 * res_score)
+
+    # OpenEnv requires score strictly in (0, 1) — clamp away from the boundaries
+    score = max(0.001, min(0.999, score))
 
     return {
 
