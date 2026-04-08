@@ -457,7 +457,7 @@ def main():
 
     verbose = args.output == "human"
 
-    if args.heuristic or not API_KEY:
+    if args.heuristic or not HF_TOKEN:
 
         agent = None
 
