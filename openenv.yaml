@@ -158,7 +158,7 @@ tasks:
       and efficiency (fewer steps = higher bonus).
     grader:
       metric: classification_accuracy_x_efficiency
-      range: [0.0, 1.0]
+      range: [0.001, 0.999]
 
   - id: root_cause_analysis
     name: Root Cause Analysis
@@ -177,7 +177,7 @@ tasks:
         root_identified: 0.25
         remediation:     0.15
         resolved:        0.10
-      range: [0.0, 1.0]
+      range: [0.001, 0.999]
 
   - id: full_incident_response
     name: Full Incident Response
@@ -197,7 +197,7 @@ tasks:
         root_coverage:      0.25
         remediation:        0.20
         resolution_quality: 0.15
-      range: [0.0, 1.0]
+      range: [0.001, 0.999]
 
 # ── Baseline scores (heuristic agent — keyword matcher, no LLM) ─────────────
 # Run: python baseline/run_baseline.py --heuristic --output json
