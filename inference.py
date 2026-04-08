@@ -458,13 +458,21 @@ def main():
 
     verbose = args.output == "human"
 
-    if args.heuristic or not HF_TOKEN:
+    if args.heuristic:
 
         agent = None
 
     else:
 
-        agent = BaselineAgent(model=args.model)
+        try:
+
+            agent = BaselineAgent(model=args.model)
+
+        except RuntimeError as e:
+
+            print(f"[WARN] Could not initialise LLM agent ({e}); falling back to heuristic.", flush=True)
+
+            agent = None
 
     try:
         env = IncidentResponseEnv()
@@ -505,7 +513,6 @@ def main():
             print(f"\n[FATAL] {error_msg}")
         else:
             print(json.dumps({"error": error_msg}))
-        sys.exit(1)
 
 if __name__ == "__main__":
 
