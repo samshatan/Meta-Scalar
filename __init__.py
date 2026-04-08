@@ -4,6 +4,6 @@ from environment.models import Action, Observation, Reward, EnvironmentState
 
 __all__ = ["IncidentResponseEnv", "Action", "Observation", "Reward", "EnvironmentState"]
 
-from api.app import app
+from server.app import app
 
 __all__ = ["app"]
