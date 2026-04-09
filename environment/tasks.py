@@ -25,6 +25,10 @@ def _bound(x: float) -> float:
     return max(_EPS, min(1.0 - _EPS, float(x)))
 
 def _health(name, status, err, p99, pods):
+    # OpenEnv rejects 0.0 and 1.0 anywhere in JSON
+    err = max(0.001, min(0.999, float(err)))
+    p99 = 0.001 if p99 == 0 else float(p99)
+    pods = max(1, int(pods))  # avoid 0
     return ServiceHealth(name=name, status=status, error_rate=err, p99_latency_ms=p99, pod_count=pods)
 
 TASK_1_SCENARIOS = [
