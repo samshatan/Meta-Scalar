@@ -139,7 +139,7 @@ class ServiceHealth(BaseModel):
 
     p99_latency_ms: float
 
-    pod_count: int
+    pod_count: float
 
 class Observation(BaseModel):
 
