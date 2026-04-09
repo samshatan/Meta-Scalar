@@ -287,7 +287,7 @@ TASK_3_SCENARIOS = [
             Alert(alert_id="ALT-020", service="api-gateway", severity="P1", message="Error rate 55% — platform-wide impact", fired_at="2024-06-17T03:00:00Z", metrics={"error_rate": 0.55, "p99_latency_ms": 18000.0}),
             Alert(alert_id="ALT-021", service="order-service", severity="P1", message="Order placement failure rate 62%", fired_at="2024-06-17T03:00:05Z", metrics={"error_rate": 0.62}),
             Alert(alert_id="ALT-022", service="fraud-detection", severity="P2", message="Model inference timeout", fired_at="2024-06-17T03:00:10Z", metrics={"p99_latency_ms": 25000.0}),
-            Alert(alert_id="ALT-023", service="warehouse-pipeline", severity="P2", message="ETL pipeline halted — no rows processed", fired_at="2024-06-17T03:01:00Z", metrics={"rows_processed_last_5m": 0.0}),
+            Alert(alert_id="ALT-023", service="warehouse-pipeline", severity="P2", message="ETL pipeline halted — no rows processed", fired_at="2024-06-17T03:01:00Z", metrics={"rows_processed_last_5m": 0.001}),
         ],
         "available_services": [
             "api-gateway", "order-service", "fraud-detection",
@@ -361,8 +361,8 @@ TASK_3_SCENARIOS = [
         "alerts": [
             Alert(alert_id="ALT-030", service="api-gateway", severity="P1", message="TLS handshake error rate 98% — all HTTPS terminated", fired_at="2024-08-01T00:00:00Z", metrics={"error_rate": 0.98, "tls_errors_per_min": 12000.0}),
             Alert(alert_id="ALT-031", service="mobile-backend", severity="P1", message="SSL certificate verification failed — all clients rejected", fired_at="2024-08-01T00:00:05Z", metrics={"error_rate": 0.99}),
-            Alert(alert_id="ALT-032", service="partner-api", severity="P2", message="Mutual TLS auth failure 100%", fired_at="2024-08-01T00:00:10Z", metrics={"error_rate": 1.00}),
-            Alert(alert_id="ALT-033", service="health-monitor", severity="P3", message="Certificate expiry check: *.platform.io expired 2 min ago", fired_at="2024-08-01T00:01:00Z", metrics={"days_until_expiry": -0.001}),
+            Alert(alert_id="ALT-032", service="partner-api", severity="P2", message="Mutual TLS auth failure 100%", fired_at="2024-08-01T00:00:10Z", metrics={"error_rate": 0.999}),
+            Alert(alert_id="ALT-033", service="health-monitor", severity="P3", message="Certificate expiry check: *.platform.io expired 2 min ago", fired_at="2024-08-01T00:01:00Z", metrics={"days_until_expiry": 0.001}),
         ],
         "available_services": [
             "api-gateway", "mobile-backend", "partner-api",
