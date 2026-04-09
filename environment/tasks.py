@@ -17,11 +17,10 @@ from .models import (
     Observation
 )
 
-# OpenEnv requires ALL numbers strictly between 0 and 1 (not inclusive)
+# OpenEnv requires ALL scores strictly between 0 and 1 (not inclusive)
 _EPS = 0.001
 
 def _bound(x: float) -> float:
-    """Clamp to strictly (0,1) for OpenEnv validation"""
     try:
         f = float(x)
     except:
@@ -33,7 +32,6 @@ def _bound(x: float) -> float:
     return f
 
 def _health(name, status, err, p99, pods):
-    # OpenEnv rejects 0.0 and 1.0 ANYWHERE - clamp everything
     err = _bound(err)
     p99 = _bound(p99 if p99 != 0 else 0.5)
     pods = _bound(pods if pods != 0 else 0.5)
@@ -51,7 +49,14 @@ TASK_1_SCENARIOS = [
             "Investigate the situation and classify the root incident category."
         ),
         "alerts": [
-            _alert("ALT-001", "payment-service", "P2", "p99 latency > 5 s — SLO breach imminent", "2024-06-15T02:14:00Z", {"p99_latency_ms": 5420.0, "error_rate": 0.03})
+            _alert(
+                alert_id="ALT-001",
+                service="payment-service",
+                severity="P2",
+                message="p99 latency > 5 s — SLO breach imminent",
+                fired_at="2024-06-15T02:14:00Z",
+                metrics={"p99_latency_ms": 5420.0, "error_rate": 0.03}
+            )
         ],
         "available_services": ["payment-service", "postgres-primary", "redis-cache"],
         "service_health": [
@@ -61,16 +66,22 @@ TASK_1_SCENARIOS = [
         ],
         "log_map": {
             "payment-service": [
-                LogEntry(timestamp="2024-06-15T02:13:55Z", service="payment-service", level="ERROR", message="Connection pool exhausted — queue depth: 512"),
-                LogEntry(timestamp="2024-06-15T02:13:56Z", service="payment-service", level="ERROR", message="Timeout waiting for DB connection after 30 s"),
-                LogEntry(timestamp="2024-06-15T02:13:58Z", service="payment-service", level="WARN",  message="Retrying transaction (attempt 3/3)"),
+                LogEntry(timestamp="2024-06-15T02:13:55Z", service="payment-service",
+                    level="ERROR", message="Connection pool exhausted — queue depth: 512"),
+                LogEntry(timestamp="2024-06-15T02:13:56Z", service="payment-service",
+                    level="ERROR", message="Timeout waiting for DB connection after 30 s"),
+                LogEntry(timestamp="2024-06-15T02:13:58Z", service="payment-service",
+                    level="WARN",  message="Retrying transaction (attempt 3/3)"),
             ],
             "postgres-primary": [
-                LogEntry(timestamp="2024-06-15T02:13:50Z", service="postgres-primary", level="WARN",  message="max_connections=100 reached, refusing new connections"),
-                LogEntry(timestamp="2024-06-15T02:13:52Z", service="postgres-primary", level="ERROR", message="Connection from 10.0.1.15 rejected: too many clients"),
+                LogEntry(timestamp="2024-06-15T02:13:50Z", service="postgres-primary",
+                    level="WARN",  message="max_connections=100 reached, refusing new connections"),
+                LogEntry(timestamp="2024-06-15T02:13:52Z", service="postgres-primary",
+                    level="ERROR", message="Connection from 10.0.1.15 rejected: too many clients"),
             ],
             "redis-cache": [
-                LogEntry(timestamp="2024-06-15T02:13:55Z", service="redis-cache", level="INFO",  message="All operations nominal"),
+                LogEntry(timestamp="2024-06-15T02:13:55Z", service="redis-cache",
+                    level="INFO",  message="All operations nominal"),
             ],
         },
         "ground_truth": {
@@ -87,7 +98,14 @@ TASK_1_SCENARIOS = [
             "Classify the incident category."
         ),
         "alerts": [
-            _alert("ALT-002", "image-worker", "P2", "Container memory usage at 94% — OOM kill likely", "2024-06-15T09:30:00Z", {"memory_pct": 94.0, "gc_pause_ms": 820.0})
+            _alert(
+                alert_id="ALT-002",
+                service="image-worker",
+                severity="P2",
+                message="Container memory usage at 94% — OOM kill likely",
+                fired_at="2024-06-15T09:30:00Z",
+                metrics={"memory_pct": 94.0, "gc_pause_ms": 820.0}
+            )
         ],
         "available_services": ["image-worker", "object-store", "message-queue"],
         "service_health": [
@@ -97,15 +115,20 @@ TASK_1_SCENARIOS = [
         ],
         "log_map": {
             "image-worker": [
-                LogEntry(timestamp="2024-06-15T09:29:00Z", service="image-worker", level="WARN",  message="GC pause 820 ms — heap 3.8 GB / 4 GB"),
-                LogEntry(timestamp="2024-06-15T09:29:30Z", service="image-worker", level="ERROR", message="OutOfMemoryError: unable to allocate 512 MB"),
-                LogEntry(timestamp="2024-06-15T09:29:45Z", service="image-worker", level="ERROR", message="Image cache not being evicted — TTL logic bypassed"),
+                LogEntry(timestamp="2024-06-15T09:29:00Z", service="image-worker",
+                    level="WARN",  message="GC pause 820 ms — heap 3.8 GB / 4 GB"),
+                LogEntry(timestamp="2024-06-15T09:29:30Z", service="image-worker",
+                    level="ERROR", message="OutOfMemoryError: unable to allocate 512 MB"),
+                LogEntry(timestamp="2024-06-15T09:29:45Z", service="image-worker",
+                    level="ERROR", message="Image cache not being evicted — TTL logic bypassed"),
             ],
             "object-store": [
-                LogEntry(timestamp="2024-06-15T09:29:50Z", service="object-store", level="INFO",  message="Serving requests normally"),
+                LogEntry(timestamp="2024-06-15T09:29:50Z", service="object-store",
+                    level="INFO",  message="Serving requests normally"),
             ],
             "message-queue": [
-                LogEntry(timestamp="2024-06-15T09:29:50Z", service="message-queue", level="INFO",  message="Queue depth 24, within normal range"),
+                LogEntry(timestamp="2024-06-15T09:29:50Z", service="message-queue",
+                    level="INFO",  message="Queue depth 24, within normal range"),
             ],
         },
         "ground_truth": {
@@ -126,11 +149,23 @@ TASK_2_SCENARIOS = [
             "Investigate and identify the root cause service."
         ),
         "alerts": [
-            _alert("ALT-010", "checkout-service", "P1", "502 Bad Gateway rate 45%", "2024-06-16T14:00:00Z", {"error_rate": 0.45, "p99_latency_ms": 12000.0}),
-            _alert("ALT-011", "inventory-service", "P2", "502 Bad Gateway rate 38%", "2024-06-16T14:00:30Z", {"error_rate": 0.38, "p99_latency_ms": 9800.0}),
-            _alert("ALT-012", "notification-service", "P3", "Delivery failure rate 60%", "2024-06-16T14:01:00Z", {"error_rate": 0.60}),
+            _alert(alert_id="ALT-010", service="checkout-service",
+                severity="P1", message="502 Bad Gateway rate 45%",
+                fired_at="2024-06-16T14:00:00Z",
+                metrics={"error_rate": 0.45, "p99_latency_ms": 12000.0}),
+            _alert(alert_id="ALT-011", service="inventory-service",
+                severity="P2", message="502 Bad Gateway rate 38%",
+                fired_at="2024-06-16T14:00:30Z",
+                metrics={"error_rate": 0.38, "p99_latency_ms": 9800.0}),
+            _alert(alert_id="ALT-012", service="notification-service",
+                severity="P3", message="Delivery failure rate 60%",
+                fired_at="2024-06-16T14:01:00Z",
+                metrics={"error_rate": 0.60}),
         ],
-        "available_services": ["checkout-service", "inventory-service", "notification-service", "auth-service", "postgres-replica"],
+        "available_services": [
+            "checkout-service", "inventory-service", "notification-service",
+            "auth-service", "postgres-replica"
+        ],
         "service_health": [
             _health("checkout-service",     "degraded", 0.45, 12000.0, 3),
             _health("inventory-service",    "degraded", 0.38,  9800.0, 3),
@@ -140,23 +175,32 @@ TASK_2_SCENARIOS = [
         ],
         "log_map": {
             "checkout-service": [
-                LogEntry(timestamp="2024-06-16T13:59:55Z", service="checkout-service", level="ERROR", message="Failed to validate JWT: connection refused to auth-service:8080"),
-                LogEntry(timestamp="2024-06-16T13:59:56Z", service="checkout-service", level="ERROR", message="Auth check failed — returning 502 to client"),
+                LogEntry(timestamp="2024-06-16T13:59:55Z", service="checkout-service",
+                    level="ERROR", message="Failed to validate JWT: connection refused to auth-service:8080"),
+                LogEntry(timestamp="2024-06-16T13:59:56Z", service="checkout-service",
+                    level="ERROR", message="Auth check failed — returning 502 to client"),
             ],
             "inventory-service": [
-                LogEntry(timestamp="2024-06-16T13:59:58Z", service="inventory-service", level="ERROR", message="Authorization middleware: auth-service unreachable"),
-                LogEntry(timestamp="2024-06-16T13:59:59Z", service="inventory-service", level="WARN",  message="Fallback: rejecting all unauthenticated requests"),
+                LogEntry(timestamp="2024-06-16T13:59:58Z", service="inventory-service",
+                    level="ERROR", message="Authorization middleware: auth-service unreachable"),
+                LogEntry(timestamp="2024-06-16T13:59:59Z", service="inventory-service",
+                    level="WARN",  message="Fallback: rejecting all unauthenticated requests"),
             ],
             "notification-service": [
-                LogEntry(timestamp="2024-06-16T14:00:10Z", service="notification-service", level="ERROR", message="Cannot verify sender token — auth-service timeout"),
+                LogEntry(timestamp="2024-06-16T14:00:10Z", service="notification-service",
+                    level="ERROR", message="Cannot verify sender token — auth-service timeout"),
             ],
             "auth-service": [
-                LogEntry(timestamp="2024-06-16T13:58:00Z", service="auth-service", level="ERROR", message="OOMKilled — container restarting (CrashLoopBackOff)"),
-                LogEntry(timestamp="2024-06-16T13:58:30Z", service="auth-service", level="ERROR", message="Startup failed: cannot read secret /vault/token — permission denied"),
-                LogEntry(timestamp="2024-06-16T13:58:32Z", service="auth-service", level="ERROR", message="Configuration error: VAULT_ROLE not set"),
+                LogEntry(timestamp="2024-06-16T13:58:00Z", service="auth-service",
+                    level="ERROR", message="OOMKilled — container restarting (CrashLoopBackOff)"),
+                LogEntry(timestamp="2024-06-16T13:58:30Z", service="auth-service",
+                    level="ERROR", message="Startup failed: cannot read secret /vault/token — permission denied"),
+                LogEntry(timestamp="2024-06-16T13:58:32Z", service="auth-service",
+                    level="ERROR", message="Configuration error: VAULT_ROLE not set"),
             ],
             "postgres-replica": [
-                LogEntry(timestamp="2024-06-16T14:00:00Z", service="postgres-replica", level="INFO",  message="Replication lag 0 ms — nominal"),
+                LogEntry(timestamp="2024-06-16T14:00:00Z", service="postgres-replica",
+                    level="INFO",  message="Replication lag 0 ms — nominal"),
             ],
         },
         "ground_truth": {
@@ -175,11 +219,23 @@ TASK_2_SCENARIOS = [
             "to find the root cause service and resolve."
         ),
         "alerts": [
-            _alert("ALT-013", "order-service", "P1", "Error rate 52% — order placement failures", "2024-07-10T11:00:00Z", {"error_rate": 0.52, "p99_latency_ms": 14500.0}),
-            _alert("ALT-014", "reporting-service", "P2", "Report generation timeout 70%", "2024-07-10T11:00:30Z", {"error_rate": 0.70}),
-            _alert("ALT-015", "analytics-worker", "P3", "Job queue stalled — no completions in 5 min", "2024-07-10T11:01:00Z", {"queue_depth": 320.0}),
+            _alert(alert_id="ALT-013", service="order-service",
+                severity="P1", message="Error rate 52% — order placement failures",
+                fired_at="2024-07-10T11:00:00Z",
+                metrics={"error_rate": 0.52, "p99_latency_ms": 14500.0}),
+            _alert(alert_id="ALT-014", service="reporting-service",
+                severity="P2", message="Report generation timeout 70%",
+                fired_at="2024-07-10T11:00:30Z",
+                metrics={"error_rate": 0.70}),
+            _alert(alert_id="ALT-015", service="analytics-worker",
+                severity="P3", message="Job queue stalled — no completions in 5 min",
+                fired_at="2024-07-10T11:01:00Z",
+                metrics={"queue_depth": 320.0}),
         ],
-        "available_services": ["order-service", "reporting-service", "analytics-worker", "postgres-primary", "redis-cache"],
+        "available_services": [
+            "order-service", "reporting-service", "analytics-worker",
+            "postgres-primary", "redis-cache",
+        ],
         "service_health": [
             _health("order-service",      "degraded", 0.52, 14500.0, 3),
             _health("reporting-service",  "degraded", 0.70,  9000.0, 2),
@@ -189,23 +245,32 @@ TASK_2_SCENARIOS = [
         ],
         "log_map": {
             "order-service": [
-                LogEntry(timestamp="2024-07-10T10:59:45Z", service="order-service", level="ERROR", message="DB query timeout after 30 s — postgres-primary unreachable"),
-                LogEntry(timestamp="2024-07-10T10:59:47Z", service="order-service", level="ERROR", message="FATAL: terminating connection due to administrator command"),
+                LogEntry(timestamp="2024-07-10T10:59:45Z", service="order-service",
+                    level="ERROR", message="DB query timeout after 30 s — postgres-primary unreachable"),
+                LogEntry(timestamp="2024-07-10T10:59:47Z", service="order-service",
+                    level="ERROR", message="FATAL: terminating connection due to administrator command"),
             ],
             "reporting-service": [
-                LogEntry(timestamp="2024-07-10T10:59:50Z", service="reporting-service", level="ERROR", message="Connection to postgres-primary refused: host unreachable"),
-                LogEntry(timestamp="2024-07-10T10:59:52Z", service="reporting-service", level="WARN",  message="Retrying DB query — attempt 3/3 failed"),
+                LogEntry(timestamp="2024-07-10T10:59:50Z", service="reporting-service",
+                    level="ERROR", message="Connection to postgres-primary refused: host unreachable"),
+                LogEntry(timestamp="2024-07-10T10:59:52Z", service="reporting-service",
+                    level="WARN",  message="Retrying DB query — attempt 3/3 failed"),
             ],
             "analytics-worker": [
-                LogEntry(timestamp="2024-07-10T11:00:00Z", service="analytics-worker", level="ERROR", message="Cannot open cursor — postgresql driver error: connection reset"),
+                LogEntry(timestamp="2024-07-10T11:00:00Z", service="analytics-worker",
+                    level="ERROR", message="Cannot open cursor — postgresql driver error: connection reset"),
             ],
             "postgres-primary": [
-                LogEntry(timestamp="2024-07-10T10:58:00Z", service="postgres-primary", level="ERROR", message="Out of memory: kill process 1234 (postgres) score 998"),
-                LogEntry(timestamp="2024-07-10T10:58:05Z", service="postgres-primary", level="ERROR", message="OOM killer terminated postmaster — database shutting down"),
-                LogEntry(timestamp="2024-07-10T10:58:10Z", service="postgres-primary", level="ERROR", message="Server process (PID 1234) was terminated by signal 9 (Killed)"),
+                LogEntry(timestamp="2024-07-10T10:58:00Z", service="postgres-primary",
+                    level="ERROR", message="Out of memory: kill process 1234 (postgres) score 998"),
+                LogEntry(timestamp="2024-07-10T10:58:05Z", service="postgres-primary",
+                    level="ERROR", message="OOM killer terminated postmaster — database shutting down"),
+                LogEntry(timestamp="2024-07-10T10:58:10Z", service="postgres-primary",
+                    level="ERROR", message="Server process (PID 1234) was terminated by signal 9 (Killed)"),
             ],
             "redis-cache": [
-                LogEntry(timestamp="2024-07-10T11:00:00Z", service="redis-cache", level="INFO",  message="All keys within TTL — no anomalies"),
+                LogEntry(timestamp="2024-07-10T11:00:00Z", service="redis-cache",
+                    level="INFO",  message="All keys within TTL — no anomalies"),
             ],
         },
         "ground_truth": {
@@ -229,12 +294,15 @@ TASK_3_SCENARIOS = [
             "remediation, and resolve the incident with a clear summary."
         ),
         "alerts": [
-            _alert("ALT-020", "api-gateway", "P1", "Error rate 55% — platform-wide impact", "2024-06-17T03:00:00Z", {"error_rate": 0.55, "p99_latency_ms": 18000.0}),
-            _alert("ALT-021", "order-service", "P1", "Order placement failure rate 62%", "2024-06-17T03:00:05Z", {"error_rate": 0.62}),
-            _alert("ALT-022", "fraud-detection", "P2", "Model inference timeout", "2024-06-17T03:00:10Z", {"p99_latency_ms": 25000.0}),
-            _alert("ALT-023", "warehouse-pipeline", "P2", "ETL pipeline halted — no rows processed", "2024-06-17T03:01:00Z", {"rows_processed_last_5m": 0.0}),
+            _alert(alert_id="ALT-020", service="api-gateway", severity="P1", message="Error rate 55% — platform-wide impact", fired_at="2024-06-17T03:00:00Z", metrics={"error_rate": 0.55, "p99_latency_ms": 18000.0}),
+            _alert(alert_id="ALT-021", service="order-service", severity="P1", message="Order placement failure rate 62%", fired_at="2024-06-17T03:00:05Z", metrics={"error_rate": 0.62}),
+            _alert(alert_id="ALT-022", service="fraud-detection", severity="P2", message="Model inference timeout", fired_at="2024-06-17T03:00:10Z", metrics={"p99_latency_ms": 25000.0}),
+            _alert(alert_id="ALT-023", service="warehouse-pipeline", severity="P2", message="ETL pipeline halted — no rows processed", fired_at="2024-06-17T03:01:00Z", metrics={"rows_processed_last_5m": 0.001}),
         ],
-        "available_services": ["api-gateway", "order-service", "fraud-detection", "warehouse-pipeline", "ml-feature-store", "redis-cluster", "postgres-primary"],
+        "available_services": [
+            "api-gateway", "order-service", "fraud-detection",
+            "warehouse-pipeline", "ml-feature-store", "redis-cluster", "postgres-primary"
+        ],
         "service_health": [
             _health("api-gateway",        "degraded", 0.55, 18000.0, 4),
             _health("order-service",      "degraded", 0.62,  9000.0, 3),
@@ -278,8 +346,14 @@ TASK_3_SCENARIOS = [
         "ground_truth": {
             "category": IncidentCategory.RESOURCE_EXHAUSTION,
             "root_services": ["redis-cluster", "ml-feature-store"],
-            "correct_remediations": [RemediationAction.CLEAR_DISK_SPACE, RemediationAction.RESTART_SERVICE],
-            "correct_remediation_values": {RemediationAction.CLEAR_DISK_SPACE.value, RemediationAction.RESTART_SERVICE.value},
+            "correct_remediations": [
+                RemediationAction.CLEAR_DISK_SPACE,
+                RemediationAction.RESTART_SERVICE,
+            ],
+            "correct_remediation_values": {
+                RemediationAction.CLEAR_DISK_SPACE.value,
+                RemediationAction.RESTART_SERVICE.value,
+            },
             "min_investigations": 3,
             "resolution_keywords": ["disk", "redis", "cluster", "feature"],
         },
@@ -295,12 +369,15 @@ TASK_3_SCENARIOS = [
             "relevant services, apply the correct remediation, and resolve."
         ),
         "alerts": [
-            _alert("ALT-030", "api-gateway", "P1", "TLS handshake error rate 98% — all HTTPS terminated", "2024-08-01T00:00:00Z", {"error_rate": 0.98, "tls_errors_per_min": 12000.0}),
-            _alert("ALT-031", "mobile-backend", "P1", "SSL certificate verification failed — all clients rejected", "2024-08-01T00:00:05Z", {"error_rate": 0.99}),
-            _alert("ALT-032", "partner-api", "P2", "Mutual TLS auth failure 100%", "2024-08-01T00:00:10Z", {"error_rate": 1.00}),
-            _alert("ALT-033", "health-monitor", "P3", "Certificate expiry check: *.platform.io expired 2 min ago", "2024-08-01T00:01:00Z", {"days_until_expiry": -0.001}),
+            _alert(alert_id="ALT-030", service="api-gateway", severity="P1", message="TLS handshake error rate 98% — all HTTPS terminated", fired_at="2024-08-01T00:00:00Z", metrics={"error_rate": 0.98, "tls_errors_per_min": 12000.0}),
+            _alert(alert_id="ALT-031", service="mobile-backend", severity="P1", message="SSL certificate verification failed — all clients rejected", fired_at="2024-08-01T00:00:05Z", metrics={"error_rate": 0.99}),
+            _alert(alert_id="ALT-032", service="partner-api", severity="P2", message="Mutual TLS auth failure 100%", fired_at="2024-08-01T00:00:10Z", metrics={"error_rate": 0.999}),
+            _alert(alert_id="ALT-033", service="health-monitor", severity="P3", message="Certificate expiry check: *.platform.io expired 2 min ago", fired_at="2024-08-01T00:01:00Z", metrics={"days_until_expiry": 0.001}),
         ],
-        "available_services": ["api-gateway", "mobile-backend", "partner-api", "cert-manager", "health-monitor", "postgres-primary"],
+        "available_services": [
+            "api-gateway", "mobile-backend", "partner-api",
+            "cert-manager", "health-monitor", "postgres-primary",
+        ],
         "service_health": [
             _health("api-gateway",     "down",    1.00,     0.0, 4),
             _health("mobile-backend", "down",    1.00,     0.0, 3),
@@ -337,8 +414,14 @@ TASK_3_SCENARIOS = [
         "ground_truth": {
             "category": IncidentCategory.CONFIGURATION_ERROR,
             "root_services": ["cert-manager"],
-            "correct_remediations": [RemediationAction.ROTATE_CREDENTIALS, RemediationAction.UPDATE_CONFIG],
-            "correct_remediation_values": {RemediationAction.ROTATE_CREDENTIALS.value, RemediationAction.UPDATE_CONFIG.value},
+            "correct_remediations": [
+                RemediationAction.ROTATE_CREDENTIALS,
+                RemediationAction.UPDATE_CONFIG,
+            ],
+            "correct_remediation_values": {
+                RemediationAction.ROTATE_CREDENTIALS.value,
+                RemediationAction.UPDATE_CONFIG.value,
+            },
             "min_investigations": 3,
             "resolution_keywords": ["certificate", "tls", "expired", "cert"],
         },
@@ -351,74 +434,151 @@ TASKS = {
         "id": "alert_classification",
         "name": "Alert Classification",
         "difficulty": "easy",
-        "description": "A single alert has fired. Optionally investigate one or two services, then classify the incident into the correct IncidentCategory. Rewards correct classification and penalises wasted steps.",
+        "description": (
+            "A single alert has fired. Optionally investigate one or two services, "
+            "then classify the incident into the correct IncidentCategory. "
+            "Rewards correct classification and penalises wasted steps."
+        ),
         "scenarios": TASK_1_SCENARIOS,
-        "action_schema": {"classify": {"category": "IncidentCategory enum value"}, "investigate": {"service_name": "string"}},
+        "action_schema": {
+            "classify":    {"category": "IncidentCategory enum value"},
+            "investigate": {"service_name": "string"},
+        },
     },
     "root_cause_analysis": {
         "id": "root_cause_analysis",
         "name": "Root Cause Analysis",
         "difficulty": "medium",
-        "description": "Multiple services are affected. The agent must investigate at least two services, correctly classify the incident, identify the root service, and resolve the episode. Partial credit for each phase.",
+        "description": (
+            "Multiple services are affected. The agent must investigate at least two "
+            "services, correctly classify the incident, identify the root service, "
+            "and resolve the episode. Partial credit for each phase."
+        ),
         "scenarios": TASK_2_SCENARIOS,
-        "action_schema": {"classify": {"category": "IncidentCategory enum value"}, "investigate": {"service_name": "string"}, "remediate": {"service_name": "string", "remediation_action": "RemediationAction enum value"}, "resolve": {"resolution_summary": "string"}},
+        "action_schema": {
+            "classify":    {"category": "IncidentCategory enum value"},
+            "investigate": {"service_name": "string"},
+            "remediate":   {"service_name": "string", "remediation_action": "RemediationAction enum value"},
+            "resolve":     {"resolution_summary": "string"},
+        },
     },
     "full_incident_response": {
         "id": "full_incident_response",
         "name": "Full Incident Response",
         "difficulty": "hard",
-        "description": "A platform-wide outage. The agent must classify, investigate ≥3 services, apply the correct remediations across multiple root-cause services, then resolve with a coherent summary. Every phase is scored independently.",
+        "description": (
+            "A platform-wide outage. The agent must classify, investigate ≥3 services, "
+            "apply the correct remediations across multiple root-cause services, then "
+            "resolve with a coherent summary. Every phase is scored independently."
+        ),
         "scenarios": TASK_3_SCENARIOS,
-        "action_schema": {"classify": {"category": "IncidentCategory enum value"}, "investigate": {"service_name": "string"}, "remediate": {"service_name": "string", "remediation_action": "RemediationAction enum value"}, "escalate": {"escalation_reason": "string"}, "resolve": {"resolution_summary": "string"}},
+        "action_schema": {
+            "classify":    {"category": "IncidentCategory enum value"},
+            "investigate": {"service_name": "string"},
+            "remediate":   {"service_name": "string", "remediation_action": "RemediationAction enum value"},
+            "escalate":    {"escalation_reason": "string"},
+            "resolve":     {"resolution_summary": "string"},
+        },
     },
 }
 
 def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Easy grader — alert classification.
+    Score = classification_correct * efficiency_bonus
+    """
     gt = state["ground_truth"]
     obs = state["observation"]
+
     classification_correct = 1.0 if (obs.get("classified") and obs.get("classification") == gt["category"].value) else 0.0
+
     steps_used = obs.get("step", 0)
-    efficiency = 1.0 if steps_used <= 3 else max(0.5, 1.0 - 0.05 * (steps_used - 3))
+    if steps_used <= 3:
+        efficiency = 1.0
+    else:
+        efficiency = max(0.5, 1.0 - 0.05 * (steps_used - 3))
+
     score = classification_correct * efficiency
+
     return {
         "score": round(_bound(score), 4),
-        "breakdown": {"classification_correct": round(_bound(classification_correct), 4), "efficiency_bonus": round(_bound(efficiency), 4)},
-        "feedback": f"Classification {'correct ✓' if classification_correct else 'wrong ✗'} (submitted: {obs.get('classification')}, expected: {gt['category'].value}). Efficiency: {efficiency:.2f} ({steps_used} steps used).",
+        "breakdown": {
+            "classification_correct": round(_bound(classification_correct), 4),
+            "efficiency_bonus": round(_bound(efficiency), 4),
+        },
+        "feedback": (
+            f"Classification {'correct ✓' if classification_correct else 'wrong ✗'} "
+            f"(submitted: {obs.get('classification')}, "
+            f"expected: {gt['category'].value}). "
+            f"Efficiency: {efficiency:.2f} ({steps_used} steps used)."
+        ),
     }
 
 def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Medium grader — root cause analysis.
+    """
     gt = state["ground_truth"]
     obs = state["observation"]
-    cls_score = 1.0 if (obs.get("classified") and obs.get("classification") == gt["category"].value) else 0.0
+
+    cls_score = 1.0 if (obs.get("classified") and
+                        obs.get("classification") == gt["category"].value) else 0.0
+
     done = obs.get("investigations_done", [])
     min_inv = gt.get("min_investigations", 2)
     inv_score = min(1.0, len(done) / min_inv) if min_inv > 0 else 1.0
+
     root_investigated = 1.0 if gt["root_service"] in done else 0.0
     resolved_score = 1.0 if obs.get("resolved") else 0.0
-    score = (0.30 * cls_score + 0.30 * inv_score + 0.25 * root_investigated + 0.15 * resolved_score)
+
+    score = (0.30 * cls_score +
+             0.30 * inv_score +
+             0.25 * root_investigated +
+             0.15 * resolved_score)
+
     return {
         "score": round(_bound(score), 4),
-        "breakdown": {"classification": round(_bound(cls_score), 4), "investigation": round(_bound(inv_score), 4), "root_identified": round(_bound(root_investigated), 4), "resolved": round(_bound(resolved_score), 4)},
-        "feedback": f"Classification: {cls_score:.2f} | Investigation breadth: {inv_score:.2f} ({len(done)}/{min_inv} services) | Root service found: {root_investigated:.2f} | Resolved: {resolved_score:.2f}",
+        "breakdown": {
+            "classification":  round(_bound(cls_score), 4),
+            "investigation":   round(_bound(inv_score), 4),
+            "root_identified": round(_bound(root_investigated), 4),
+            "resolved":        round(_bound(resolved_score), 4),
+        },
+        "feedback": (
+            f"Classification: {cls_score:.2f} | "
+            f"Investigation breadth: {inv_score:.2f} ({len(done)}/{min_inv} services) | "
+            f"Root service found: {root_investigated:.2f} | "
+            f"Resolved: {resolved_score:.2f}"
+        ),
     }
 
 def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Hard grader — full incident response.
+    """
     gt = state["ground_truth"]
     obs = state["observation"]
-    cls_score = 1.0 if (obs.get("classified") and obs.get("classification") == gt["category"].value) else 0.0
+
+    cls_score = 1.0 if (obs.get("classified") and
+                        obs.get("classification") == gt["category"].value) else 0.0
+
     done = set(obs.get("investigations_done", []))
     min_inv = gt.get("min_investigations", 3)
     inv_score = min(1.0, len(done) / min_inv)
+
     root_services = set(gt.get("root_services", []))
     covered = root_services & done
     root_score = len(covered) / len(root_services) if root_services else 1.0
+
     applied = set(obs.get("remediation_applied", []))
     correct = gt.get("correct_remediation_values", set())
     if not correct and "correct_remediations" in gt:
         correct = set(r.value for r in gt.get("correct_remediations", []))
+    
     rem_score = len(applied & correct) / len(correct) if correct else 1.0
     wrong = applied - correct
     rem_score = max(0.0, rem_score - 0.1 * len(wrong))
+
     res_score = 0.0
     if obs.get("resolved"):
         res_score = 0.5
@@ -429,15 +589,54 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
             res_score += 0.5 * (kw_found / len(keywords))
         else:
             res_score = 1.0
-    score = (0.20 * cls_score + 0.20 * inv_score + 0.25 * root_score + 0.20 * rem_score + 0.15 * res_score)
+
+    score = (0.20 * cls_score +
+             0.20 * inv_score +
+             0.25 * root_score +
+             0.20 * rem_score +
+             0.15 * res_score)
+
     return {
         "score": round(_bound(score), 4),
-        "breakdown": {"classification": round(_bound(cls_score), 4), "investigation": round(_bound(inv_score), 4), "root_coverage": round(_bound(root_score), 3), "remediation": round(_bound(rem_score), 3), "resolution_quality": round(_bound(res_score), 3)},
-        "feedback": f"Classification: {cls_score:.2f} | Investigation: {inv_score:.2f} ({len(done)}/{min_inv}) | Root coverage: {root_score:.2f} ({len(covered)}/{len(root_services)}) | Remediation: {rem_score:.2f} | Resolution: {res_score:.2f}",
+        "breakdown": {
+            "classification":     round(_bound(cls_score), 4),
+            "investigation":      round(_bound(inv_score), 4),
+            "root_coverage":      round(_bound(root_score), 3),
+            "remediation":        round(_bound(rem_score), 3),
+            "resolution_quality": round(_bound(res_score), 3),
+        },
+        "feedback": (
+            f"Classification: {cls_score:.2f} | "
+            f"Investigation: {inv_score:.2f} ({len(done)}/{min_inv}) | "
+            f"Root coverage: {root_score:.2f} ({len(covered)}/{len(root_services)}) | "
+            f"Remediation: {rem_score:.2f} | "
+            f"Resolution: {res_score:.2f}"
+        ),
     }
 
 GRADERS = {
-    "alert_classification": grade_task1,
-    "root_cause_analysis": grade_task2,
+    "alert_classification":  grade_task1,
+    "root_cause_analysis":   grade_task2,
     "full_incident_response": grade_task3,
 }
+
+_original_g1, _original_g2, _original_g3 = grade_task1, grade_task2, grade_task3
+def grade_task1(s):
+    r = _original_g1(s)
+    r["score"] = _bound(r["score"])
+    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
+    return r
+def grade_task2(s):
+    r = _original_g2(s)
+    r["score"] = _bound(r["score"])
+    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
+    return r
+def grade_task3(s):
+    r = _original_g3(s)
+    r["score"] = _bound(r["score"])
+    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
+    return r
+
+GRADERS["alert_classification"] = grade_task1
+GRADERS["root_cause_analysis"] = grade_task2
+GRADERS["full_incident_response"] = grade_task3
