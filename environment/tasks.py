@@ -32,13 +32,10 @@ def _bound(x: float) -> float:
     return f
 
 def _health(name, status, err, p99, pods):
-    err = _bound(err)
-    p99 = _bound(p99 if p99 != 0 else 0.5)
-    pods = _bound(pods if pods != 0 else 0.5)
     return ServiceHealth(name=name, status=status, error_rate=err, p99_latency_ms=p99, pod_count=pods)
 
 def _alert(alert_id, service, severity, message, fired_at, metrics):
-    safe_metrics = {k: _bound(v) for k, v in metrics.items()}
+    safe_metrics = {k: v for k, v in metrics.items()}
     return Alert(alert_id=alert_id, service=service, severity=severity, message=message, fired_at=fired_at, metrics=safe_metrics)
 
 TASK_1_SCENARIOS = [
@@ -503,8 +500,8 @@ def grade_task1(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "score": round(_bound(score), 4),
         "breakdown": {
-            "classification_correct": round(_bound(classification_correct), 4),
-            "efficiency_bonus": round(_bound(efficiency), 4),
+            "classification_correct": round(classification_correct, 4),
+            "efficiency_bonus": round(efficiency, 4),
         },
         "feedback": (
             f"Classification {'correct ✓' if classification_correct else 'wrong ✗'} "
@@ -539,10 +536,10 @@ def grade_task2(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "score": round(_bound(score), 4),
         "breakdown": {
-            "classification":  round(_bound(cls_score), 4),
-            "investigation":   round(_bound(inv_score), 4),
-            "root_identified": round(_bound(root_investigated), 4),
-            "resolved":        round(_bound(resolved_score), 4),
+            "classification":  round(cls_score, 4),
+            "investigation":   round(inv_score, 4),
+            "root_identified": round(root_investigated, 4),
+            "resolved":        round(resolved_score, 4),
         },
         "feedback": (
             f"Classification: {cls_score:.2f} | "
@@ -599,11 +596,11 @@ def grade_task3(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "score": round(_bound(score), 4),
         "breakdown": {
-            "classification":     round(_bound(cls_score), 4),
-            "investigation":      round(_bound(inv_score), 4),
-            "root_coverage":      round(_bound(root_score), 3),
-            "remediation":        round(_bound(rem_score), 3),
-            "resolution_quality": round(_bound(res_score), 3),
+            "classification":     round(cls_score, 4),
+            "investigation":      round(inv_score, 4),
+            "root_coverage":      round(root_score, 3),
+            "remediation":        round(rem_score, 3),
+            "resolution_quality": round(res_score, 3),
         },
         "feedback": (
             f"Classification: {cls_score:.2f} | "
@@ -624,17 +621,14 @@ _original_g1, _original_g2, _original_g3 = grade_task1, grade_task2, grade_task3
 def grade_task1(s):
     r = _original_g1(s)
     r["score"] = _bound(r["score"])
-    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
     return r
 def grade_task2(s):
     r = _original_g2(s)
     r["score"] = _bound(r["score"])
-    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
     return r
 def grade_task3(s):
     r = _original_g3(s)
     r["score"] = _bound(r["score"])
-    r["breakdown"] = {k: _bound(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v for k, v in r["breakdown"].items()}
     return r
 
 GRADERS["alert_classification"] = grade_task1

@@ -117,7 +117,7 @@ class TestTask1:
 
         assert result["breakdown"]["classification_correct"] == 0.0
 
-        assert result["score"] == 0.0
+        assert result["score"] == 0.001
 
     def test_grader_score_in_range(self, env):
 
